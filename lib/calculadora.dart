@@ -92,7 +92,7 @@ class _CalculadoraState extends State<Calculadora>
                   spacing: 20,
                   children: 
                   [
-                    Row(children: [Text("Z =",style: TextStyle(fontSize: 24)),
+                    SingleChildScrollView(scrollDirection: Axis.horizontal,child:Row(children: [Text("Z =",style: TextStyle(fontSize: 24)),
                       ...List.generate(_funcion.length, (int index)
                       {
                         return Row(children: [ElevatedButton(
@@ -106,7 +106,7 @@ class _CalculadoraState extends State<Calculadora>
                         ), TextField(decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
                         Text("X$index")]);
                       })]
-                      ),
+                      )),
                   ...List.generate(_numRestricciones, (int index)
                   {
                     return SingleChildScrollView(scrollDirection: Axis.horizontal,child: Row(children: [...List.generate(_numVariables, (int index2)
@@ -127,8 +127,8 @@ class _CalculadoraState extends State<Calculadora>
                                                 DropdownMenuEntry(value: ">=", label: ">=")],
                                     initialSelection: "=",
                                     inputDecorationTheme: InputDecorationTheme(
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-                                      constraints: BoxConstraints.tight(Size.fromWidth(80)),
+                                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                                      constraints: BoxConstraints.tight(Size.fromWidth(70)),
                                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(4),)
                                     ),
                                     onSelected: (String? seleccion)

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:simplex_calc/boton.dart';
+import 'package:simplex_calc/funcObjetivo.dart';
+import 'package:simplex_calc/pantallaGrafico.dart';
+import 'package:simplex_calc/inputRestriccion.dart';
+import 'package:simplex_calc/inputTermino.dart';
 import 'package:simplex_calc/restriccion.dart';
 import 'package:simplex_calc/termino.dart';
 
@@ -19,7 +23,7 @@ class _CalculadoraState extends State<Calculadora>
 
   final TextEditingController _textController = TextEditingController();
 
-  final List<String> _metodos = ["Simplex","Gran M"];
+  int _metodo = 1;
 
   String _optimizacion = "max";
 
@@ -27,9 +31,9 @@ class _CalculadoraState extends State<Calculadora>
 
   int _numRestricciones = 1;
 
-  List<Termino> _funcion = [Termino(),Termino()];
+  List<InputTermino> _funcion = [InputTermino(),InputTermino()];
 
-  List<Restriccion> _restricciones = List.generate(1, (int index){return Restriccion(2,Termino());});
+  List<InputRestriccion> _restricciones = List.generate(1, (int index){return InputRestriccion(2,InputTermino());});
   
 
   final List<String> _botones=
@@ -54,21 +58,48 @@ class _CalculadoraState extends State<Calculadora>
   {
     setState(() {
       _funcion.clear();
-      _funcion = List.generate(_numVariables, (int index) {return Termino();});
+      _funcion = List.generate(_numVariables, (int index) {return InputTermino();});
     });
     setState(() {
       _restricciones.clear();
-      _restricciones = List.generate(_numRestricciones, (int index){return Restriccion(_numVariables, Termino());});
+      _restricciones = List.generate(_numRestricciones, (int index){return InputRestriccion(_numVariables, InputTermino());});
     });
-    print(_funcion.length);
   }
 
   void _cambiarRestricciones()
   {
     setState(() {
       _restricciones.clear();
-      _restricciones = List.generate(_numRestricciones, (int index){return Restriccion(_numVariables, Termino());});
+      _restricciones = List.generate(_numRestricciones, (int index){return InputRestriccion(_numVariables, InputTermino());});
     });
+  }
+
+  void _generarResultado()
+  {
+    List<Termino> terminosFuncion =[];
+    List<Restriccion> restricciones = [];
+    for(InputTermino termino in _funcion)
+    {
+      print(termino.valor);
+      terminosFuncion.add(Termino(double.parse(termino.signo+termino.valor)));
+    } 
+    for(InputRestriccion restriccion in _restricciones)
+    {
+      
+      List<Termino> terminos = [];
+      for(InputTermino termino in restriccion.terminos)
+      {
+        print(termino.valor);
+        terminos.add(Termino(double.parse(termino.signo+termino.valor)));
+      }
+      restricciones.add(Restriccion(terminos,restriccion.igualdad,Termino(double.parse(restriccion.resultado.valor))));
+    }
+    FuncObjetivo funcion = FuncObjetivo(_numVariables, _optimizacion, terminosFuncion);
+    
+    if(_metodo == 1 && funcion.numVariables == 2)
+    {
+      Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PantallaGrafico(funcion: funcion, restricciones: restricciones)));
+    }
   }
 
 
@@ -103,7 +134,7 @@ class _CalculadoraState extends State<Calculadora>
                             });
                           },
                           child: Container(width: 10,child: Text(_funcion[index].signo)),
-                        ), TextField(decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
+                        ), TextField(onChanged: (value) => _funcion[index].valor=value,decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
                         Text("X$index")]);
                       })]
                       )),
@@ -119,7 +150,7 @@ class _CalculadoraState extends State<Calculadora>
                             });
                           },
                           child: Container(width: 10,child: Text(_restricciones[index].terminos[index2].signo)),
-                        ),TextField(decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
+                        ),TextField(onChanged: (value) => _restricciones[index].terminos[index2].cambiarValor(value),decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
                         Text("X$index2")]);
                     }),DropdownMenu(dropdownMenuEntries: 
                                                 [DropdownMenuEntry(value: "=", label: "="),
@@ -136,12 +167,23 @@ class _CalculadoraState extends State<Calculadora>
                                         setState(() {
                                           _restricciones[index].igualdad = seleccion!;
                                         });
-                                      },),TextField(decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30)))]));
+                                      },),
+                                      
+                                      TextField(onChanged: (value) => _restricciones[index].resultado.cambiarValor(value),decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30)))]));
                   })
                   ],) 
             )),
         SingleChildScrollView(scrollDirection: Axis.horizontal,child:Row(mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: [ DropdownMenu(
+              dropdownMenuEntries: 
+                [DropdownMenuEntry(value: 1, label: "grafico"),
+                DropdownMenuEntry(value: 2, label: "simplex"),
+                DropdownMenuEntry(value: 3, label: "Dos fases"),
+                ],
+              initialSelection: 1,
+              onSelected: (int? seleccion){setState(() {
+                _metodo = seleccion!;});
+                },),
             ElevatedButton(
               onPressed:_cambiarOptimizacion, 
               style: ElevatedButton.styleFrom(padding: EdgeInsets.all(15.0),shape: LinearBorder()),
@@ -195,7 +237,7 @@ class _CalculadoraState extends State<Calculadora>
         [
           Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[12]),
           Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[13]),
-          Boton(color: Colors.orange,textColor: Colors.black,buttonText: _botones[14]),
+          Boton(color: Colors.orange,textColor: Colors.black,buttonText: _botones[14],buttomTap: _generarResultado,),
         ],),
         ],
         ),)

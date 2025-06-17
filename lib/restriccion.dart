@@ -2,19 +2,22 @@ import 'package:simplex_calc/termino.dart';
 
 class Restriccion 
 {
-  List<Termino> terminos=[];
+  List<Termino> terminos = [];
   String igualdad = "=";
   late Termino resultado;
 
-  Restriccion(int numVariables,Termino resultado)
-  {
-    terminos = List.generate(numVariables, (int index){return Termino();});
-    this.resultado = resultado;
-  }
+  Restriccion(this.terminos,this.igualdad,this.resultado);
 
-  void cambiarLista(int numVariables)
-  {
-    terminos.clear();
-    terminos = List.generate(numVariables, (int index){return Termino();});
+  @override
+  String toString() {
+    String resultado = "";
+    int x = 1;
+    for(Termino termino in terminos)
+    {
+      resultado += " ${termino.toString()}X$x";
+      x++;
+    }
+    resultado += " $igualdad ${this.resultado.toString()}";
+    return resultado.trim();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:simplex_calc/funcObjetivo.dart';
 import 'package:simplex_calc/restriccion.dart';
@@ -7,42 +9,143 @@ class PantallaGrafico extends StatelessWidget
 {
   final FuncObjetivo funcion;
   final List<Restriccion> restricciones;
+  final List<Restriccion> restriccionesVariables = [];
   final List<List<(double,double)>> puntosInterseccion = [];
   final List<(double,double)> vertices = [];
+  final List<(double,double)> puntosFactibles = [];
+
   double minX=0;
   double minY=0;
   double maxX=0;
   double maxY=0;
+  double maximo=10;
 
   PantallaGrafico({super.key, required this.funcion, required this.restricciones})
   {
     for(Restriccion r in restricciones)
     {
-      List<(double, double)> puntos = [];
-      double x = r.terminos[0].valor;
-      double y = r.terminos[1].valor;
-      double resultado = r.resultado.valor;
-      double x1 = 0;
-      double y2 = 0;
+      generarPuntosInterseccion(r);
+      
+    }
+    calcularMaximo();
+    if(restriccionesVariables.isNotEmpty)
+    {
+      for(Restriccion r in restriccionesVariables)
+      {
+        generarPuntosInterseccioNegativo(r);
+        
+      }
+    }
+    vertices.add((0,0));
+    generarVertices();
+    obtenerSolucionesFactibles();
+  }
 
+  void calcularMaximo()
+  {
+    maximo = maxX > maxY? maxX : maxY;
+    
+  }
+
+  double calcularPunto(double s, double a, double b)
+  {
+    double r = s-a;
+    
+    return (r/b);
+  }
+
+  double obtenerY(double y, double s)
+  {
+    if(y != 0)
+    {
+      return s/y;
+    }
+    return -1;
+  }
+
+  void sumarVertice((double,double)punto)
+  {
+    if(!vertices.contains(punto))
+    {
+      vertices.add(punto);
+    }
+  }
+
+  void generarPuntosInterseccion(Restriccion r)
+  {
+    List<(double, double)> puntos = [];
+    double x = r.terminos[0].valor;
+    double y = r.terminos[1].valor;
+    double resultado = r.resultado.valor;
+    double x1 = 0;
+    double y2 = 0;
+
+    
+
+    if(x >= 0 && y >= 0)
+    {
       // Calcular puntos de intersección
       if(x != 0)
       {
         x1 = resultado / x;
         puntos.add((x1,0));
+        sumarVertice((x1,0));
       }
       if(y != 0)
       {
         y2 = resultado / y;
         puntos.add((0,y2));
+        sumarVertice((0,y2));
       }
-
       maxX = x1 > maxX? x1 : maxX;
       maxY = y2 > maxY? y2 : maxY;
       puntosInterseccion.add(puntos);
+    }else
+    {
+      restriccionesVariables.add(r);
+    }   
+  }
+
+  generarPuntosInterseccioNegativo(Restriccion r)
+  {
+    List<(double, double)> puntos = [];
+    double x = r.terminos[0].valor;
+    double y = r.terminos[1].valor;
+    double resultado = r.resultado.valor;
+    double x1 = 0;
+    double x2 = 0;
+    double y1 = 0;
+    double y2 = 0;
+    
+    
+    if(x < 0)
+    {
+      y1 = resultado/y;
+      if(x.abs()< y)
+      {
+        x2 = maximo;
+        y2 = calcularPunto(resultado, x2*x,y);
+        print("x2: $x2, y2: $y2");
+      }else
+      {
+        y2 = maximo;
+        x2 = calcularPunto(resultado,y2*y1,x);
+      }
+      
+    }else
+    {
+      x1 = resultado/x;
+      y2 = maximo;
+      y2 = calcularPunto(resultado, x2*x1, y);
     }
 
-    generarVertices();
+    puntos.add((x1,y1));
+    puntos.add((x2,y2));
+    sumarVertice((x1,y1));
+    
+    
+    
+    puntosInterseccion.add(puntos);
   }
 
   void generarVertices()
@@ -73,9 +176,64 @@ class PantallaGrafico extends StatelessWidget
             {
               generarVerticesUnConstante(j, x1, y1, s1);
             }
+          }else
+          {
+            generarVertice(x1, x2, y1, y2, s1, s2);
           }
         }
         
+      }
+    }
+  }
+
+  void generarVertice(double x1, double x2, double y1, double y2, double s1, double s2)
+  {
+    
+    double nx1 = x1;
+    double ny1 = y1;
+    double ns1 = s1;
+    double nx2 = x2;
+    double ny2 = y2;
+    double ns2 = s2;
+    if(nx1.abs() != 1)
+    {
+      double absX1 = nx1.abs();
+      nx1 = nx1/absX1; 
+      ny1 = ny1/absX1; 
+      ns1 = ns1/absX1;
+    }
+    if(nx2.abs() != 1)
+    {
+      double absX2 = nx2.abs();
+      nx2 = nx2/absX2;
+      ny2/= ny2/absX2;
+      ns2/= ns2/absX2;
+    }
+    print("$nx1, $ny1, $ns1");
+    print("$nx2, $ny2, $ns2");
+    //Ambas x tienen el mismo signo
+    if(nx1 == nx2)
+    {
+      if(ns1 > ns2)
+      {
+        nx2*=-1;ny2*=-1;ns2*=-1;
+      }else
+      {
+        nx1*=-1;ny1*=-1;ns1*=-1;
+      }
+    }
+
+    double y = obtenerY(ny1+ny2,ns1+ns2);
+    
+    if(y >= 0)
+    {
+      double r = s2 - (y*y2);
+      
+      double x = r/x2;
+      
+      if(x>=0)
+      {
+        sumarVertice((x,y));
       }
     }
   }
@@ -88,7 +246,7 @@ class PantallaGrafico extends StatelessWidget
     double bp2 = puntosInterseccion[j][0].$2;
     if(ap1 != bp1 || ap2 != bp2)
     {
-      vertices.add((ap1+bp1,ap2+bp2));
+      sumarVertice((ap1+bp1,ap2+bp2));
     }
   }
 
@@ -106,7 +264,8 @@ class PantallaGrafico extends StatelessWidget
       y1 = r/y;
       if(y1 >= 0)
       {
-        vertices.add((ap1,y1));
+        sumarVertice((ap1,y1));
+
       }
     }else
     {
@@ -115,7 +274,23 @@ class PantallaGrafico extends StatelessWidget
       x1 = r/x;
       if(x1 >= 0)
       {
-        vertices.add((x1,ap2));
+        sumarVertice((x1,ap2));
+      }
+    }
+  }
+
+  obtenerSolucionesFactibles()
+  {
+    for((double,double) punto in vertices)
+    {
+      bool valido = true;
+      for(Restriccion r in restricciones)
+      {
+        valido = r.evaluarDosVariables(punto);
+      }
+      if(valido)
+      {
+        puntosFactibles.add(punto);
       }
     }
   }
@@ -153,7 +328,7 @@ class PantallaGrafico extends StatelessWidget
                   Container(color: Colors.white,padding: EdgeInsets.all(10),margin: EdgeInsets.symmetric(horizontal:350),
                     child:CustomPaint(
                       size: Size(double.infinity, 300),
-                      painter: _GraficoPainter(puntosInterseccion, funcion.terminos, restricciones,vertices,maxX,maxY)
+                      painter: _GraficoPainter(puntosInterseccion, funcion.terminos, restricciones,vertices,puntosFactibles,maximo)
                     ))
                 ],
               ),
@@ -171,13 +346,13 @@ class _GraficoPainter extends CustomPainter {
   final List<Termino> terminosFuncion;
   final List<Restriccion> restricciones;
   final List<(double,double)> vertices;
-  final double maxX;
-  final double maxY;
+  final List<(double,double)> puntosFactibles;
+  int c = 10;
   late double maximo;
 
-  _GraficoPainter(this.puntosInterseccion, this.terminosFuncion, this.restricciones,this.vertices,this.maxX,this.maxY)
+  _GraficoPainter(this.puntosInterseccion, this.terminosFuncion, this.restricciones,this.vertices,this.puntosFactibles,double maximo)
   {
-    maximo = maxX > maxY? maxX : maxY;
+    this.maximo = maximo + (maximo*0.1);
   }
 
   @override
@@ -188,8 +363,8 @@ class _GraficoPainter extends CustomPainter {
       ..strokeWidth = 2.0;
 
     // Dibujar ejes
-    canvas.drawLine(Offset(0, size.height), Offset(size.height, size.height), paint);
-    canvas.drawLine(Offset(0, size.height), Offset(0, 0), paint);
+    canvas.drawLine(Offset(10, size.height-10), Offset(size.height+10, size.height-10), paint);
+    canvas.drawLine(Offset(10, size.height-10), Offset(10, 10), paint);
 
     // Dibujar puntos de interseccion
     for (List<(double,double)> puntos in puntosInterseccion)
@@ -204,9 +379,19 @@ class _GraficoPainter extends CustomPainter {
         double x2 = puntos[1].$1 / maximo * size.height;
         double y2 = puntos[1].$2 / maximo * size.height;
 
-        canvas.drawCircle(Offset(x1, size.height - y1),5, paint);
-        canvas.drawCircle(Offset(x2, size.height - y2),5, paint);
-        canvas.drawLine(Offset(x1, size.height - y1), Offset(x2, size.height - y2), paint);
+        /*if(puntos[1].$1 > maximo)
+        {
+          x2 = size.height;
+        }
+        if(puntos[1].$2 > maximo)
+        {
+          y2 = size.height;
+        }*/
+
+        canvas.drawCircle(Offset(x1+c, size.height - y1-c),5, paint);
+        canvas.drawCircle(Offset(x2+c, size.height - y2-c),5, paint);
+        canvas.drawLine(Offset(x1+c, size.height - y1-c), Offset(x2+c, size.height - y2-c), paint);
+        canvas.clipRect(Offset.zero & size);
       }
 
       for((double,double) vertice in vertices)
@@ -226,7 +411,18 @@ class _GraficoPainter extends CustomPainter {
       ..color = Colors.green
       ..style = PaintingStyle.fill;
     
-    canvas.drawCircle(Offset(x, size.height - y),5, paint);
+    final paintFact = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.fill;
+
+    if(puntosFactibles.contains(vertice))
+    {
+      canvas.drawCircle(Offset(x+c, size.height - y-c),5, paintFact);
+    }else
+    {
+      canvas.drawCircle(Offset(x+c, size.height - y-c),5, paint);
+    }
+    
   }
 
   void dibujarUnicoPunto((double, double) punto,Canvas canvas, Size size)
@@ -237,14 +433,14 @@ class _GraficoPainter extends CustomPainter {
       ..color = Colors.red
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(Offset(x, size.height - y),5, paint);
+    canvas.drawCircle(Offset(x+c, size.height - y-c),5, paint);
 
     if(x==0)
     {
-      canvas.drawLine(Offset(0, size.height - y), Offset(size.height, size.height-y), paint);
+      canvas.drawLine(Offset(0.0+c, size.height - y-c), Offset(size.height, size.height-y), paint);
     }else
     {
-      canvas.drawLine(Offset(x, size.height), Offset(x, 0), paint);
+      canvas.drawLine(Offset(x+c, size.height-c), Offset(x, 0), paint);
     }
   }
 

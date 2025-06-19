@@ -20,4 +20,22 @@ class Restriccion
     resultado += " $igualdad ${this.resultado.toString()}";
     return resultado.trim();
   }
+
+  bool evaluarDosVariables((double,double) punto)
+  {
+    double a = punto.$1;
+    double b = punto.$2;
+
+    double x = terminos[0].valor*a;
+    double y = terminos[1].valor*b;
+    double s = resultado.valor;
+
+    switch(igualdad)
+    {
+      case "=": return(x+y == s);
+      case ">=": return(x+y >= s);
+      case "<=":return(x+y <= s);
+      default: return false;
+    }
+  }
 }

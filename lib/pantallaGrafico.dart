@@ -18,6 +18,8 @@ class PantallaGrafico extends StatelessWidget
   final List<double> soluciones = [];
   double solucionOptima = 0;
   List<(double,double)> puntosOptimos = [];
+  bool noAcotado = false;
+  bool degenerada = false;
 
   double maxX=0;
   double maxY=0;
@@ -30,31 +32,45 @@ class PantallaGrafico extends StatelessWidget
 
   PantallaGrafico({super.key, required this.funcion, required this.restricciones})
   {
+    int contAcotado = 0;
     for(Restriccion r in restricciones)
     {
       generarPuntosInterseccion(r);
-      
+      if(r.igualdad == ">=")
+      {
+        contAcotado++;
+      }  
     }
-    calcularMaximo();
+    noAcotado = contAcotado == restricciones.length? true : false;
+
+    calcularPuntoMaximo();
+
     if(restriccionesVariables.isNotEmpty)
     {
       for(Restriccion r in restriccionesVariables)
       {
         generarPuntosInterseccioNegativo(r);
-        
       }
     }
+
     vertices.add((0,0));
+
     generarVertices();
     obtenerSolucionesFactibles();
-    ordenarSoluciones();
+    if(noAcotado)
+    {
+      ordenarSolucionesNoAcotada();
+    }else
+    {
+      ordenarSoluciones();
+    }
     calcularSoluciones();
+    vertices.toSet().toList();
   }
 
-  void calcularMaximo()
+  void calcularPuntoMaximo()
   {
-    maximo = maxX > maxY? maxX : maxY;
-    
+    maximo = maxX > maxY? maxX : maxY; 
   }
 
   double calcularPunto(double s, double a, double b)
@@ -135,7 +151,7 @@ class PantallaGrafico extends StatelessWidget
       {
         x2 = maximo;
         y2 = calcularPunto(resultado, x2*x,y);
-        print("x2: $x2, y2: $y2");
+        
       }else
       {
         y2 = maximo;
@@ -199,12 +215,17 @@ class PantallaGrafico extends StatelessWidget
   void generarVertice(double x1, double x2, double y1, double y2, double s1, double s2)
   {
     
+    
     double nx1 = x1;
     double ny1 = y1;
     double ns1 = s1;
     double nx2 = x2;
     double ny2 = y2;
     double ns2 = s2;
+
+    print("$nx1, $ny1, $ns1");
+    print("$nx2, $ny2, $ns2");
+    
     if(nx1.abs() != 1)
     {
       double absX1 = nx1.abs();
@@ -216,11 +237,12 @@ class PantallaGrafico extends StatelessWidget
     {
       double absX2 = nx2.abs();
       nx2 = nx2/absX2;
-      ny2/= ny2/absX2;
-      ns2/= ns2/absX2;
+      ny2 = ny2/absX2;
+      ns2 = ns2/absX2;
     }
-    print("$nx1, $ny1, $ns1");
-    print("$nx2, $ny2, $ns2");
+
+    
+    
     //Ambas x tienen el mismo signo
     if(nx1 == nx2)
     {
@@ -232,6 +254,9 @@ class PantallaGrafico extends StatelessWidget
         nx1*=-1;ny1*=-1;ns1*=-1;
       }
     }
+
+    print("$nx1, $ny1, $ns1");
+    print("$nx2, $ny2, $ns2");
 
     double y = obtenerY(ny1+ny2,ns1+ns2);
     
@@ -294,28 +319,32 @@ class PantallaGrafico extends StatelessWidget
     for((double,double) punto in vertices)
     {
       bool valido = true;
-      for(Restriccion r in restricciones)
+      if(!puntosFactibles.contains(punto))
       {
-        valido = r.evaluarDosVariables(punto);
-        if(!valido){break;}
-      }
-      if(valido)
+        for(Restriccion r in restricciones)
+        {
+          valido = r.evaluarDosVariables(punto);
+          if(!valido){break;}
+        }
+        if(valido)
+        {
+          puntosFactibles.add(punto);
+        }
+      }else
       {
-        puntosFactibles.add(punto);
+        degenerada = true;
       }
     }
   }
 
+  void ordenarSolucionesNoAcotada()
+  {
+    puntosFactibles.sort((a, b) => a.$1.compareTo(b.$1));
+  }
+
   void ordenarSoluciones()
   {
-    print(puntosFactibles);
-    for((double,double) punto in puntosFactibles)
-    {
-      maxVerx = punto.$1 > maxVerx? punto.$1 : maxVerx;
-      maxVery = punto.$2 > maxVery? punto.$2 : maxVery;
-      minVerx = punto.$1 < minVerx? punto.$1 : minVerx;
-      minVery = punto.$2 < minVery? punto.$2 : minVery;
-    }
+    
 
     // Ordenar los vértices en sentido antihorario respecto al centroide
     if (puntosFactibles.length > 2) {
@@ -334,7 +363,7 @@ class PantallaGrafico extends StatelessWidget
         double angleB = atan2(b.$2 - cy, b.$1 - cx);
         return angleA.compareTo(angleB);
       });
-      print(puntosFactibles);
+      
     }
   }  
 
@@ -396,8 +425,68 @@ class PantallaGrafico extends StatelessWidget
     solucionOptima = min;
     puntosOptimos = optimos;
   }
-  
-  
+
+  String mostrarTipoSolucion()
+  {
+    if(puntosOptimos.isEmpty)
+    {
+      return "No existe solucion optima";
+    }
+    String resultado = "Se obtuvo la siguiente solución optima ";
+    resultado += puntosOptimos.length == 1? "única ": "múltiple ";
+    if(noAcotado)
+    {
+      if(funcion.optimizacion == "max")
+      {
+        puntosOptimos.clear();
+        return "No se pudo obtener una solución factible de la región no acotada";
+      }
+      resultado += "no acotada ";
+    }
+    if(degenerada){
+      resultado += "degenerada";
+    }
+    resultado += ":";
+    return resultado;
+  }
+
+  List<Widget> listaRestricciones()
+  {
+    List<Widget> lista = [];
+    int cont = 1;
+    for(Restriccion r in restricciones)
+    {
+      if(!restriccionesVariables.contains(r))
+      {
+        lista.add(Text("R$cont: ${r.toString()}", style: TextStyle(fontSize: 16)));
+        cont++;
+      }
+    }
+    for(Restriccion r in restriccionesVariables)
+    {
+      lista.add(Text("R$cont: ${r.toString()}", style: TextStyle(fontSize: 16)));
+      cont++;
+    }
+    return lista;
+  }
+
+  List<Widget> listaPuntos()
+  {
+    List<Widget> lista = [];
+    int cont = 1;
+    for(List<(double,double)> puntos in puntosInterseccion)
+    {
+      String resultado = "R$cont: ";
+      for((double,double) punto in puntos)
+      {
+        resultado += "P(${punto.$1.toStringAsFixed(2)},${punto.$2.toStringAsFixed(2)}) ";
+      }
+      lista.add(Text(resultado,style: TextStyle(fontSize: 16)));
+      cont++;
+    }
+    return lista;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -423,15 +512,15 @@ class PantallaGrafico extends StatelessWidget
                   Text(funcion.toString(), style: TextStyle(fontSize: 16)),
                   SizedBox(height: 20),
                   Text("Restricciones:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  ...restricciones.map((r) => Text(r.toString(), style: TextStyle(fontSize: 16))).toList(),
+                  ...listaRestricciones(),
                   Text("Puntos de Corte:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  ...puntosInterseccion.map((puntos) => Text("Punto: ()", style: TextStyle(fontSize: 16))).toList(),
+                  ...listaPuntos(),
                   Text("Gráfico:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   // Aquí se puede integrar un widget de gráfico, como un CustomPaint o un paquete de gráficos
-                  Container(color: Colors.white,padding: EdgeInsets.all(10),margin: EdgeInsets.symmetric(horizontal:350),
+                  Container(color: Colors.white,padding: EdgeInsets.all(10),margin: EdgeInsets.symmetric(horizontal:10,vertical: 100),
                     child:CustomPaint(
                       size: Size(double.infinity, 300),
-                      painter: _GraficoPainter(puntosInterseccion, funcion.terminos, restricciones,vertices,puntosFactibles,maximo)
+                      painter: _GraficoPainter(puntosInterseccion, funcion.terminos, restricciones,vertices,puntosFactibles,maximo,noAcotado)
                     )),
                   Text("Vertices:",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ...List.generate(puntosFactibles.length, (int index)
@@ -443,6 +532,15 @@ class PantallaGrafico extends StatelessWidget
                       return Text(texto, style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold));
                     }
                     return Text(texto, style: TextStyle(fontSize: 16));
+                  }),
+                  Text("Conclusión:",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(mostrarTipoSolucion(),style: TextStyle(fontSize: 16)),
+                  ...List.generate(puntosOptimos.length, (int index)
+                  {
+                    String resultado = "x1: ${puntosOptimos[index].$1.toStringAsFixed(2)}   ";
+                    resultado += "x2: ${puntosOptimos[index].$2.toStringAsFixed(2)}   ";
+                    resultado += "Z: ${solucionOptima.toStringAsFixed(2)}";
+                    return Text(resultado,style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold));
                   })
                 ],
               ),
@@ -463,8 +561,9 @@ class _GraficoPainter extends CustomPainter {
   final List<(double,double)> puntosFactibles;
   int c = 10;
   late double maximo;
+  late bool noAcotado;
 
-  _GraficoPainter(this.puntosInterseccion, this.terminosFuncion, this.restricciones,this.vertices,this.puntosFactibles,double maximo)
+  _GraficoPainter(this.puntosInterseccion, this.terminosFuncion, this.restricciones,this.vertices,this.puntosFactibles,double maximo,this.noAcotado)
   {
     this.maximo = maximo + (maximo*0.1);
   }
@@ -518,7 +617,7 @@ class _GraficoPainter extends CustomPainter {
       if(i != puntosFactibles.length-1)
       {
         dibujarRectaArea(puntosFactibles[i],puntosFactibles[i+1],canvas,size);
-      }else
+      }else if(!noAcotado)
       {
         dibujarRectaArea(puntosFactibles[i],puntosFactibles[0],canvas,size);
       }
@@ -569,7 +668,8 @@ class _GraficoPainter extends CustomPainter {
   {
     final paint = Paint()
       ..color = Colors.red
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
       
       
     double x1 = p1.$1/maximo*size.height;
@@ -578,6 +678,7 @@ class _GraficoPainter extends CustomPainter {
     double y2 = p2.$2/maximo*size.height;
 
     canvas.drawLine(Offset(x1+c, size.height-y1-c), Offset(x2+c, size.height-y2-c), paint);
+    
   }
 
   void dibujarUnicoPunto((double, double) punto,Canvas canvas, Size size)

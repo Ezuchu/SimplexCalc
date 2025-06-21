@@ -19,4 +19,16 @@ class FuncObjetivo
     }
     return resultado.trim();
   }
+
+  double calcularSolucion(List<double> variables)
+  {
+    double solucion = 0;
+    
+    for(int i = 0; i < terminos.length;i++)
+    {
+      print(i);
+      solucion += variables[i]*terminos[i].valor;
+    }
+    return solucion;
+  }
 }

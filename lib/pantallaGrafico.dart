@@ -1,4 +1,6 @@
+
 import 'dart:ui';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:simplex_calc/funcObjetivo.dart';
@@ -13,12 +15,18 @@ class PantallaGrafico extends StatelessWidget
   final List<List<(double,double)>> puntosInterseccion = [];
   final List<(double,double)> vertices = [];
   final List<(double,double)> puntosFactibles = [];
+  final List<double> soluciones = [];
+  double solucionOptima = 0;
+  List<(double,double)> puntosOptimos = [];
 
-  double minX=0;
-  double minY=0;
   double maxX=0;
   double maxY=0;
   double maximo=10;
+
+  double minVerx=0;
+  double minVery=0;
+  double maxVerx=0;
+  double maxVery=0;
 
   PantallaGrafico({super.key, required this.funcion, required this.restricciones})
   {
@@ -39,6 +47,8 @@ class PantallaGrafico extends StatelessWidget
     vertices.add((0,0));
     generarVertices();
     obtenerSolucionesFactibles();
+    ordenarSoluciones();
+    calcularSoluciones();
   }
 
   void calcularMaximo()
@@ -287,6 +297,7 @@ class PantallaGrafico extends StatelessWidget
       for(Restriccion r in restricciones)
       {
         valido = r.evaluarDosVariables(punto);
+        if(!valido){break;}
       }
       if(valido)
       {
@@ -294,6 +305,98 @@ class PantallaGrafico extends StatelessWidget
       }
     }
   }
+
+  void ordenarSoluciones()
+  {
+    print(puntosFactibles);
+    for((double,double) punto in puntosFactibles)
+    {
+      maxVerx = punto.$1 > maxVerx? punto.$1 : maxVerx;
+      maxVery = punto.$2 > maxVery? punto.$2 : maxVery;
+      minVerx = punto.$1 < minVerx? punto.$1 : minVerx;
+      minVery = punto.$2 < minVery? punto.$2 : minVery;
+    }
+
+    // Ordenar los vértices en sentido antihorario respecto al centroide
+    if (puntosFactibles.length > 2) {
+      // Calcular el centroide
+      double cx = 0, cy = 0;
+      for (var p in puntosFactibles) {
+        cx += p.$1;
+        cy += p.$2;
+      }
+      cx /= puntosFactibles.length;
+      cy /= puntosFactibles.length;
+
+      // Ordenar por ángulo respecto al centroide
+      puntosFactibles.sort((a, b) {
+        double angleA = atan2(a.$2 - cy, a.$1 - cx);
+        double angleB = atan2(b.$2 - cy, b.$1 - cx);
+        return angleA.compareTo(angleB);
+      });
+      print(puntosFactibles);
+    }
+  }  
+
+  void calcularSoluciones()
+  {
+    for(int i = 0; i < puntosFactibles.length; i++)
+    {
+      List<double> variables = [puntosFactibles[i].$1,puntosFactibles[i].$2];
+      double solucion = funcion.calcularSolucion(variables);
+      soluciones.add(solucion);
+    }
+    if(funcion.optimizacion == "max")
+    {
+      obtenerMaximo();
+    }else
+    {
+      obtenerMinimo();
+    }
+  }
+
+  void obtenerMaximo()
+  {
+    double max = 0;
+    List<(double,double)> optimos=[];
+    for(int i = 0; i < soluciones.length; i++)
+    {
+      if(soluciones[i]==max)
+      {
+        optimos.add(puntosFactibles[i]);
+      }
+      if(soluciones[i] > max)
+      {
+        max=soluciones[i];
+        optimos.clear();
+        optimos.add(puntosFactibles[i]);
+      }
+    }
+    solucionOptima = max;
+    puntosOptimos = optimos;
+  }
+
+  void obtenerMinimo()
+  {
+    double min = 0;
+    List<(double,double)> optimos=[];
+    for(int i = 0; i < soluciones.length; i++)
+    {
+      if(soluciones[i]==min)
+      {
+        optimos.add(puntosFactibles[i]);
+      }
+      if(soluciones[i] < min)
+      {
+        min=soluciones[i];
+        optimos.clear();
+        optimos.add(puntosFactibles[i]);
+      }
+    }
+    solucionOptima = min;
+    puntosOptimos = optimos;
+  }
+  
   
   @override
   Widget build(BuildContext context) {
@@ -329,7 +432,18 @@ class PantallaGrafico extends StatelessWidget
                     child:CustomPaint(
                       size: Size(double.infinity, 300),
                       painter: _GraficoPainter(puntosInterseccion, funcion.terminos, restricciones,vertices,puntosFactibles,maximo)
-                    ))
+                    )),
+                  Text("Vertices:",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  ...List.generate(puntosFactibles.length, (int index)
+                  {
+                    String texto = "P${index+1}(${puntosFactibles[index].$1.toStringAsFixed(2)},${puntosFactibles[index].$2.toStringAsFixed(2)}): ";
+                    texto = "$texto${soluciones[index].toStringAsFixed(2)}";
+                    if(soluciones[index]==solucionOptima)
+                    {
+                      return Text(texto, style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold));
+                    }
+                    return Text(texto, style: TextStyle(fontSize: 16));
+                  })
                 ],
               ),
             )
@@ -393,15 +507,41 @@ class _GraficoPainter extends CustomPainter {
         canvas.drawLine(Offset(x1+c, size.height - y1-c), Offset(x2+c, size.height - y2-c), paint);
         canvas.clipRect(Offset.zero & size);
       }
-
-      for((double,double) vertice in vertices)
-      {
-        dibujarVertice(vertice, canvas, size);
-      }
-      
     }
-    // Aquí se pueden agregar más detalles del gráfico según sea necesario
+    for((double,double) vertice in vertices)
+    {
+      dibujarVertice(vertice, canvas, size);
+    }
+
+    for(int i = 0; i < puntosFactibles.length;i++)
+    {
+      if(i != puntosFactibles.length-1)
+      {
+        dibujarRectaArea(puntosFactibles[i],puntosFactibles[i+1],canvas,size);
+      }else
+      {
+        dibujarRectaArea(puntosFactibles[i],puntosFactibles[0],canvas,size);
+      }
+      anotarCoordenada(i+1,puntosFactibles[i].$1,puntosFactibles[i].$2,canvas,size);
+    }
+    
+    
   }
+
+  void anotarCoordenada(int i, double x, double y,Canvas canvas,Size size)
+  {
+    double px = x/maximo*size.height;
+    double py = y/maximo*size.height;
+
+    final paint = TextPainter
+    (
+      text: TextSpan(text:"P$i",style:TextStyle(color:Colors.purple,fontSize: 16,fontWeight: FontWeight.bold)),
+      textDirection: TextDirection.ltr
+    );
+    paint.layout(maxWidth: size.height);
+    paint.paint(canvas, Offset(px+c, size.height-py-(c*3)));
+  }
+
 
   void dibujarVertice((double,double)vertice,Canvas canvas, Size size)
   {
@@ -423,6 +563,21 @@ class _GraficoPainter extends CustomPainter {
       canvas.drawCircle(Offset(x+c, size.height - y-c),5, paint);
     }
     
+  }
+
+  dibujarRectaArea((double , double ) p1, (double , double ) p2,Canvas canvas, Size size)
+  {
+    final paint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.stroke;
+      
+      
+    double x1 = p1.$1/maximo*size.height;
+    double x2 = p2.$1/maximo*size.height;
+    double y1 = p1.$2/maximo*size.height;
+    double y2 = p2.$2/maximo*size.height;
+
+    canvas.drawLine(Offset(x1+c, size.height-y1-c), Offset(x2+c, size.height-y2-c), paint);
   }
 
   void dibujarUnicoPunto((double, double) punto,Canvas canvas, Size size)

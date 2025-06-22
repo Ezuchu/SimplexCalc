@@ -18,6 +18,18 @@ class InputRestriccion
     terminos = List.generate(numVariables, (int index){return InputTermino();});
   }
 
+  void cambiarVariables(int nVariables)
+  {
+    while(terminos.length < nVariables)
+    {
+      terminos.add(InputTermino());
+    }
+    while(terminos.length > nVariables)
+    {
+      terminos.removeLast();
+    }
+  }
+
   @override
   String toString() {
     String resultado = "";

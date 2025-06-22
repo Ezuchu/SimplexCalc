@@ -57,20 +57,32 @@ class _CalculadoraState extends State<Calculadora>
   void _cambiarVariables()
   {
     setState(() {
-      _funcion.clear();
-      _funcion = List.generate(_numVariables, (int index) {return InputTermino();});
+      while(_funcion.length < _numVariables)
+      {
+        _funcion.add(InputTermino());
+      }
+      while(_funcion.length > _numVariables)
+      {
+        _funcion.removeLast();
+      }
     });
-    setState(() {
-      _restricciones.clear();
-      _restricciones = List.generate(_numRestricciones, (int index){return InputRestriccion(_numVariables, InputTermino());});
-    });
+    for(InputRestriccion r in _restricciones)
+    {
+      r.cambiarVariables(_numVariables);
+    }
   }
 
   void _cambiarRestricciones()
   {
     setState(() {
-      _restricciones.clear();
-      _restricciones = List.generate(_numRestricciones, (int index){return InputRestriccion(_numVariables, InputTermino());});
+      while(_restricciones.length < _numRestricciones)
+      {
+        _restricciones.add(InputRestriccion(_numVariables, InputTermino()));
+      }
+      while(_restricciones.length > _numRestricciones)
+      {
+        _restricciones.removeLast();
+      }
     });
   }
 

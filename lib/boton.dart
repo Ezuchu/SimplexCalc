@@ -20,7 +20,7 @@ class Boton extends StatelessWidget
             width: 60,
             height: 60,
             child:Center(
-              child: Text(buttonText,style: TextStyle(color:textColor),)
+              child: Text(buttonText,style: TextStyle(color:textColor,fontWeight: FontWeight.bold),)
             )
         )
       ))

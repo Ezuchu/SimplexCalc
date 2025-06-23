@@ -1,9 +1,16 @@
+import 'package:flutter/material.dart';
+
 class InputTermino
 {
   String signo = "+";
   String valor = "";
+  late TextEditingController controller;
+  final FocusNode focusNode = FocusNode();
 
-  InputTermino();
+  InputTermino()
+  {
+    controller = TextEditingController();
+  }
 
   void cambiarSigno()
   {

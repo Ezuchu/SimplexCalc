@@ -21,7 +21,6 @@ class _CalculadoraState extends State<Calculadora>
 {
   
 
-  final TextEditingController _textController = TextEditingController();
 
   int _metodo = 1;
 
@@ -34,11 +33,22 @@ class _CalculadoraState extends State<Calculadora>
   List<InputTermino> _funcion = [InputTermino(),InputTermino()];
 
   List<InputRestriccion> _restricciones = List.generate(1, (int index){return InputRestriccion(2,InputTermino());});
+
+  late TextEditingController controlador;
+
+  late InputTermino terminoActual;
   
+  @override   
+  void initState() {
+    super.initState();
+    controlador = _funcion[0].controller;
+    terminoActual = _funcion[0];
+  }
+
 
   final List<String> _botones=
   [
-    "del","/","X",
+    "del","C","X",
     "1","2","3",
     "4","5","6",
     "7","8","9",
@@ -114,6 +124,21 @@ class _CalculadoraState extends State<Calculadora>
     }
   }
 
+  void presionarBoton(String valor)
+  {
+    String texto = terminoActual.valor;
+
+    switch(valor)
+    {
+      case "del": texto = terminoActual.valor.substring(0,texto.length-1);break;
+      case "C": texto ="";break;
+      default:texto+=valor;
+    }
+    terminoActual.valor = texto;
+    controlador.text = terminoActual.valor;
+    
+  }
+
 
   @override  
   Widget build(BuildContext context)
@@ -146,7 +171,17 @@ class _CalculadoraState extends State<Calculadora>
                             });
                           },
                           child: Container(width: 10,child: Text(_funcion[index].signo)),
-                        ), TextField(onChanged: (value) => _funcion[index].valor=value,decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
+                        ), TextField(
+                            controller: _funcion[index].controller,
+                            focusNode: _funcion[index].focusNode,
+                            onTap: () => setState(() {
+                              controlador = _funcion[index].controller;
+                              terminoActual = _funcion[index];
+                            }),
+                            readOnly: true,
+                            enableInteractiveSelection: false,
+                            //onChanged: (value) => _funcion[index].valor=value,
+                            decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
                         Text("X$index")]);
                       })]
                       )),
@@ -162,7 +197,17 @@ class _CalculadoraState extends State<Calculadora>
                             });
                           },
                           child: Container(width: 10,child: Text(_restricciones[index].terminos[index2].signo)),
-                        ),TextField(onChanged: (value) => _restricciones[index].terminos[index2].cambiarValor(value),decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
+                        ),TextField(
+                          controller: _restricciones[index].terminos[index2].controller,
+                          focusNode: _restricciones[index].terminos[index2].focusNode,
+                          onTap: ()=> setState(() {
+                            controlador = _restricciones[index].terminos[index2].controller;
+                            terminoActual = _restricciones[index].terminos[index2];
+                          }),
+                          readOnly: true,
+                          enableInteractiveSelection: false,
+                          //onChanged: (value) => _restricciones[index].terminos[index2].cambiarValor(value),
+                          decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
                         Text("X$index2")]);
                     }),DropdownMenu(dropdownMenuEntries: 
                                                 [DropdownMenuEntry(value: "=", label: "="),
@@ -181,7 +226,17 @@ class _CalculadoraState extends State<Calculadora>
                                         });
                                       },),
                                       
-                                      TextField(onChanged: (value) => _restricciones[index].resultado.cambiarValor(value),decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30)))]));
+                                      TextField(
+                                        controller: _restricciones[index].resultado.controller,
+                                        focusNode: _restricciones[index].resultado.focusNode,
+                                        onTap: ()=> setState(() {
+                                          controlador = _restricciones[index].resultado.controller;
+                                          terminoActual = _restricciones[index].resultado;
+                                        }),
+                                        readOnly: true,
+                                        enableInteractiveSelection: false,
+                                        onChanged: (value) => _restricciones[index].resultado.cambiarValor(value),
+                                        decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30)))]));
                   })
                   ],) 
             )),
@@ -223,32 +278,32 @@ class _CalculadoraState extends State<Calculadora>
               });},)],)),
         Row(mainAxisAlignment: MainAxisAlignment.center,spacing: 40,children: 
         [
-          Boton(color: Colors.redAccent,textColor: Colors.black,buttonText: _botones[0]),
-          Boton(color: Colors.deepOrange,textColor: Colors.black,buttonText: _botones[1]),
+          Boton(color: Colors.redAccent,textColor: Colors.black,buttonText: _botones[0], buttomTap: ()=> presionarBoton(_botones[0])),
+          Boton(color: Colors.deepOrange,textColor: Colors.black,buttonText: _botones[1], buttomTap: ()=> presionarBoton(_botones[1])),
           Boton(color: Colors.orange,textColor: Colors.black,buttonText: _botones[2]),
         ],),
         Row(mainAxisAlignment: MainAxisAlignment.center,spacing: 40,children: 
         [
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[3]),
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[4]),
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[5]),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[3], buttomTap: ()=> presionarBoton(_botones[3])),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[4], buttomTap: ()=> presionarBoton(_botones[4])),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[5], buttomTap: ()=> presionarBoton(_botones[5])),
         ],),
         Row(mainAxisAlignment: MainAxisAlignment.center,spacing: 40,children: 
         [
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[6]),
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[7]),
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[8]),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[6], buttomTap: ()=> presionarBoton(_botones[6])),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[7], buttomTap: ()=> presionarBoton(_botones[7])),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[8], buttomTap: ()=> presionarBoton(_botones[8])),
         ],),
         Row(mainAxisAlignment: MainAxisAlignment.center,spacing: 40,children: 
         [
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[9]),
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[10]),
-          Boton(color: Colors.blueAccent,textColor: Colors.black,buttonText: _botones[11]),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[9], buttomTap: ()=> presionarBoton(_botones[9])),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[10], buttomTap: ()=> presionarBoton(_botones[10])),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[11], buttomTap: ()=> presionarBoton(_botones[11])),
         ],),
         Row(mainAxisAlignment: MainAxisAlignment.center,spacing: 40,children: 
         [
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[12]),
-          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[13]),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[12], buttomTap: ()=> presionarBoton(_botones[12])),
+          Boton(color: Colors.blueAccent,textColor: Colors.white,buttonText: _botones[13], buttomTap: ()=> presionarBoton(_botones[13])),
           Boton(color: Colors.orange,textColor: Colors.black,buttonText: _botones[14],buttomTap: _generarResultado,),
         ],),
         ],

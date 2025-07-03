@@ -1,6 +1,7 @@
+import 'package:simplex_calc/ecuacionLineal.dart';
 import 'package:simplex_calc/termino.dart';
 
-class FuncObjetivo
+class FuncObjetivo implements EcuacionLineal
 {
   late int numVariables;
   List<Termino> terminos=[];
@@ -30,5 +31,34 @@ class FuncObjetivo
       solucion += variables[i]*terminos[i].valor;
     }
     return solucion;
+  }
+
+  @override
+  double obtenerZ()
+  {
+    return 1.0;
+  }
+
+  @override
+  List<double> obtenerVariables()
+  {
+    List<double> coeficientes = [];
+    for(Termino termino in terminos)
+    {
+      coeficientes.add(-termino.valor);
+    }
+    return coeficientes;
+  }
+
+  @override
+  double obtenerSolucion()
+  {
+    return 0.0;
+  }
+
+  @override
+  String obtenerTipo()
+  {
+    return "func";
   }
 }

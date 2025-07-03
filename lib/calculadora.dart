@@ -117,11 +117,33 @@ class _CalculadoraState extends State<Calculadora>
       restricciones.add(Restriccion(terminos,restriccion.igualdad,Termino(double.parse(restriccion.resultado.valor))));
     }
     FuncObjetivo funcion = FuncObjetivo(_numVariables, _optimizacion, terminosFuncion);
-    
-    if(_metodo == 1 && funcion.numVariables == 2)
+
+    switch(_metodo)
     {
-      Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PantallaGrafico(funcion: funcion, restricciones: restricciones)));
+      case 1: if(funcion.numVariables == 2)
+            {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PantallaGrafico(funcion: funcion, restricciones: restricciones)));
+            }break;
+      
+      case 2: if(validoSimplex(restricciones))
+            {
+              
+            }
     }
+    
+
+  }
+
+  bool validoSimplex(List<Restriccion> restricciones)
+  {
+    for(Restriccion restriccion in restricciones)
+    {
+      if(restriccion.igualdad != "<=")
+      {
+        return false;
+      }
+    }
+    return true;
   }
 
   void presionarBoton(String valor)

@@ -1,6 +1,7 @@
+import 'package:simplex_calc/ecuacionLineal.dart';
 import 'package:simplex_calc/termino.dart';
 
-class Restriccion 
+class Restriccion implements EcuacionLineal
 {
   List<Termino> terminos = [];
   String igualdad = "=";
@@ -37,5 +38,31 @@ class Restriccion
       case "<=":return(x+y <= s);
       default: return false;
     }
+  }
+  
+  @override
+  double obtenerSolucion() {
+    return resultado.valor;
+  }
+  
+  @override
+  List<double> obtenerVariables() {
+    List<double> coeficientes = [];
+    for(Termino termino in terminos)
+    {
+      coeficientes.add(termino.valor);
+    }
+    return coeficientes;
+  }
+  
+  @override
+  double obtenerZ() {
+    return 0.0;
+  }
+
+  @override
+  String obtenerTipo()
+  {
+    return igualdad;
   }
 }

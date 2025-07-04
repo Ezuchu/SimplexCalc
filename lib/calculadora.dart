@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:simplex_calc/PantallaSimplex.dart';
+import 'package:simplex_calc/algoritmoSimplex.dart';
 import 'package:simplex_calc/boton.dart';
 import 'package:simplex_calc/funcObjetivo.dart';
 import 'package:simplex_calc/pantallaGrafico.dart';
@@ -127,7 +129,11 @@ class _CalculadoraState extends State<Calculadora>
       
       case 2: if(validoSimplex(restricciones))
             {
-              
+              AlgoritmoSimplex simplex = AlgoritmoSimplex(funcion, restricciones);
+              simplex.resolver();
+              Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => PantallaSimplex(simplex: simplex)
+              ));
             }
     }
     

@@ -8,6 +8,7 @@ class AlgoritmoSimplex
 {
   late FuncObjetivo funcion;
   late List<Restriccion> restricciones;
+  late List<List<double>> estandarinicial;
   late List<List<double>> estandar;
   late List<String> variables;
   
@@ -18,17 +19,24 @@ class AlgoritmoSimplex
   late List<int> variablesNoBasicas;
 
   late List<TablaSimplex> historialTablas;
+  bool noAcotado = false;
+  late List<TablaSimplex> historialOptimas;
+  late List<List<List<double>>> soluciones;
+  int numeroSoluciones = 0;
 
   AlgoritmoSimplex(this.funcion,this.restricciones)
   {
     this.numeroHolguras = this.restricciones.length;
     this.numeroVariables = funcion.numVariables;
     this.estandar = [];
+    this.estandarinicial = [];
     this.indicesHolguras = [];
     this.variablesBasicas = [];
     this.variablesNoBasicas = [];
     this.variables = [];
     this.historialTablas = [];
+    this.historialOptimas = [];
+    this.soluciones = [];
 
     this.crearVariables();
   }
@@ -56,10 +64,23 @@ class AlgoritmoSimplex
     for(int s = 0; s < numeroHolguras; s++)
     {
       indicesHolguras.add(s + 1 + numeroVariables);
-      print(s+1+numeroVariables);
+      
       estandar.add(Estandarizador.estandarizar(restricciones[s],numeroVariables+numeroHolguras,s+numeroVariables));
     }
+    copiarEstandar(estandar, estandarinicial);
     guardarTablaEnHistorial();
+  }
+
+  void copiarEstandar(List<List<double>> lInicial, List<List<double>> lFinal)
+  {
+    for(List<double> fila in lInicial)
+    {
+      lFinal.add(List<double>.empty(growable: true));
+      for(double coeficiente in fila)
+      {
+        lFinal.last.add(coeficiente);
+      }
+    }
   }
 
   void resolver()
@@ -68,38 +89,58 @@ class AlgoritmoSimplex
     while (!esOptimo()) {
       int columnaPivote = encontrarColumnaPivote();
       int filaPivote = encontrarFilaPivote(columnaPivote);
-      
       if (filaPivote == -1) {
+        noAcotado = true;
         print("\nEl problema no tiene solución acotada.");
         return;
       }
+      generarTabla(columnaPivote, filaPivote);
       
-      // Registrar variables antes de actualizar
-      String variableEntrante = variables[columnaPivote];
-      String variableSaliente = variables[variablesBasicas[filaPivote - 1]];
-      double valorPivote = estandar[filaPivote][columnaPivote];
-      
-      actualizarVariablesBasicas(filaPivote, columnaPivote);
-      pivotear(filaPivote, columnaPivote);
-      
-      // Guardar tabla en el historial con información del pivote
-      guardarTablaEnHistorial(
-        filaPivote: filaPivote,
-        columnaPivote: columnaPivote,
-        variableEntrante: variableEntrante,
-        variableSaliente: variableSaliente,
-        valorPivote: valorPivote,
-      );
     }
-    mostrarSolucion();
-    mostrarHistorial();
+    
+    while(tieneSolucionesMultiples())
+    {
+      int columnaPivote = encontrarColumnaPivoteMultiple();
+      int filaPivote = encontrarFilaPivote(columnaPivote);
+      generarTabla(columnaPivote, filaPivote);
+      esOptimo();
+    }
+    /*mostrarSolucion();
+    mostrarHistorial();*/
+  }
+
+  void generarTabla(int columnaPivote, int filaPivote)
+  {
+    // Registrar variables antes de actualizar
+    String variableEntrante = variables[columnaPivote];
+    String variableSaliente = variables[variablesBasicas[filaPivote - 1]];
+    double valorPivote = estandar[filaPivote][columnaPivote];
+      
+    actualizarVariablesBasicas(filaPivote, columnaPivote);
+    pivotear(filaPivote, columnaPivote);
+      
+    // Guardar tabla en el historial con información del pivote
+    guardarTablaEnHistorial(
+      filaPivote: filaPivote,
+      columnaPivote: columnaPivote,
+      variableEntrante: variableEntrante,
+      variableSaliente: variableSaliente,
+      valorPivote: valorPivote,
+    );
   }
 
   bool esOptimo() {
+    
     // Verificar si todos los coeficientes en la fila Z son no negativos (para maximización)
     for (int j = 0; j < estandar[0].length - 1; j++) {
       if (estandar[0][j] < 0) return false;
     }
+    historialOptimas.add(historialTablas.last);
+    print("tablas: ${historialOptimas.length}");
+    numeroSoluciones++;
+    List<List<double>> solucion = [];
+    copiarEstandar(estandar, solucion);
+    soluciones.add(solucion);
     return true;
   }
 
@@ -110,6 +151,21 @@ class AlgoritmoSimplex
     
     for (int j = 0; j < estandar[0].length - 1; j++) {
       if (estandar[0][j] < minValor) {
+        minValor = estandar[0][j];
+        columnaPivote = j;
+      }
+    }
+    
+    return columnaPivote;
+  }
+
+  int encontrarColumnaPivoteMultiple() {
+    // Encontrar la columna con el coeficiente más negativo en la fila Z
+    double minValor = 0;
+    int columnaPivote = 0;
+    
+    for (int j = 0; j < estandar[0].length - 1; j++) {
+      if (estandar[0][j] <= minValor && variablesNoBasicas.contains(j-1)) {
         minValor = estandar[0][j];
         columnaPivote = j;
       }
@@ -156,7 +212,34 @@ class AlgoritmoSimplex
 
   void actualizarVariablesBasicas(int filaPivote, int columnaPivote) {
     // Reemplazar la variable básica en la fila pivote con la variable de la columna pivote
-    variablesBasicas[filaPivote - 1] = columnaPivote;
+    int idx = filaPivote -1;
+    int variableSaliente = variablesBasicas[idx];
+    variablesBasicas[idx] = columnaPivote-1; 
+
+    int idxNoBasica = variablesNoBasicas.indexOf(columnaPivote-1);
+    if(idxNoBasica != -1)
+    {
+      variablesNoBasicas[idxNoBasica] = variableSaliente;
+    }
+  }
+
+  bool tieneSolucionesMultiples()
+  {
+    int conteo = 0;
+    for(int j = 0; j < estandar[0].length;j++)
+    {
+      if (variablesNoBasicas.contains(j-1) && estandar[0][j] == 0) {
+        conteo++;
+      }
+    }
+
+    if(numeroSoluciones <= conteo)
+    {
+      print("hola");
+      return true;
+    }
+    
+    return false;
   }
 
   void guardarTablaEnHistorial({
@@ -165,13 +248,17 @@ class AlgoritmoSimplex
     String variableEntrante = '',
     String variableSaliente = '',
     double valorPivote = 0.0,
-  }) {
-    // Hacer una copia profunda de la tabla actual
+    }) {
     List<List<double>> copiaTabla = [];
     for (var fila in estandar) {
       copiaTabla.add(List.from(fila));
     }
-    
+    // Copia los nombres de las variables básicas actuales
+    List<String> nombresBasicas = ['Z'];
+    for (var idx in variablesBasicas) {
+      nombresBasicas.add(variables[idx]);
+    }
+
     historialTablas.add(TablaSimplex(
       datos: copiaTabla,
       filaPivote: filaPivote,
@@ -179,6 +266,7 @@ class AlgoritmoSimplex
       variableEntrante: variableEntrante,
       variableSaliente: variableSaliente,
       valorPivote: valorPivote,
+      variablesBasicas: nombresBasicas, // <-- NUEVO
     ));
   }
 

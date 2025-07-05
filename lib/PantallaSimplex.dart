@@ -19,7 +19,7 @@ class PantallaSimplex extends StatelessWidget {
     filaSuperior.add("Sol");
   }
 
-  Widget _buildTabla(List<List<double>> tabla, List<String> variables) {
+  Widget _buildTabla(List<List<double>> tabla, List<String> variables,List<String> variablesBasicas) {
     
     int numCols = tabla.isNotEmpty ? tabla[0].length : variables.length + 1;
     
@@ -47,7 +47,7 @@ class PantallaSimplex extends StatelessWidget {
             children: [
               TableCell(child: Padding(
                 padding: EdgeInsets.all(4.0),
-                child: Text(i == 0 ? 'Z' : 'F${i}'),
+                child: Text(variablesBasicas[i]),
               )),
               ...tabla[i].map((v) => TableCell(child: Padding(
                 padding: EdgeInsets.all(4.0),
@@ -71,7 +71,7 @@ class PantallaSimplex extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Iteración ${i + 1}'),
-              _buildTabla(tabla.datos, simplex.variables),
+              _buildTabla(tabla.datos, simplex.variables,tabla.variablesBasicas),
               const SizedBox(height: 12),
             ],
           );
@@ -81,17 +81,27 @@ class PantallaSimplex extends StatelessWidget {
   }
 
   Widget _buildSolucion() {
+    if(simplex.noAcotado)
+    {
+      return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [Text('El problema no tiene solución acotada', style: const TextStyle(fontWeight: FontWeight.bold))],
+    );
+    }
     List<Widget> resultados = [];
-    resultados.add(Text('Valor óptimo de Z: ${simplex.estandar[0].last.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)));
-    for (int i = 0; i < simplex.variablesBasicas.length; i++) {
-      int varIndex = simplex.variablesBasicas[i];
-      resultados.add(Text('${simplex.variables[varIndex]} = ${simplex.estandar[i + 1].last.toStringAsFixed(2)}'));
-    }
-    for (int j = 0; j < simplex.numeroVariables; j++) {
-      if (!simplex.variablesBasicas.contains(j)) {
-        resultados.add(Text('${simplex.variables[j]} = 0.00'));
+    List<List<List<double>>> soluciones = simplex.soluciones;
+    List<TablaSimplex> tablas = simplex.historialOptimas;
+    for(int i = 0; i < soluciones.length;i++)
+    {
+      resultados.add(Text('Valor óptimo de Z: ${simplex.estandar[0].last.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)));
+      for (int j = 0; j < tablas[i].variablesBasicas.length; j++) {
+        
+        resultados.add(Text('${tablas[i].variablesBasicas[j]} = ${soluciones[i][j].last.toStringAsFixed(2)}'));
       }
+      
+      resultados.add(SizedBox(height: 24,));
     }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: resultados,
@@ -107,9 +117,9 @@ class PantallaSimplex extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Tabla Estandarizada:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            /*const Text('Tabla Estandarizada:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             _buildTabla(simplex.estandar, simplex.variables),
-            const SizedBox(height: 24),
+            const SizedBox(height: 24),*/
             _buildHistorial(),
             const SizedBox(height: 24),
             const Text('Solución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -120,3 +130,4 @@ class PantallaSimplex extends StatelessWidget {
     );
   }
 }
+

@@ -6,6 +6,7 @@ class TablaSimplex
   String variableEntrante;
   String variableSaliente;
   double valorPivote;
+  List<String> variablesBasicas;
 
   TablaSimplex({
     required this.datos,
@@ -14,6 +15,7 @@ class TablaSimplex
     this.variableEntrante = '',
     this.variableSaliente = '',
     this.valorPivote = 0.0,
+    required this.variablesBasicas
   });
 
   String toString() {

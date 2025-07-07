@@ -276,17 +276,17 @@ class _CalculadoraState extends State<Calculadora>
                           }),
                           readOnly: true,
                           enableInteractiveSelection: false,
-                          //onChanged: (value) => _restricciones[index].terminos[index2].cambiarValor(value),
                           decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
                         Text("X$index2")]);
-                    }),DropdownMenu(dropdownMenuEntries: 
+                    }),SizedBox(width: 10,),
+                    DropdownMenu(dropdownMenuEntries: 
                                                 [DropdownMenuEntry(value: "=", label: "="),
                                                 DropdownMenuEntry(value: "<=", label: "<="),
                                                 DropdownMenuEntry(value: ">=", label: ">=")],
                                     initialSelection: "=",
                                     inputDecorationTheme: InputDecorationTheme(
-                                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                                      constraints: BoxConstraints.tight(Size.fromWidth(70)),
+                                      contentPadding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
+                                      constraints: BoxConstraints.tight(Size.fromWidth(80)),
                                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(4),)
                                     ),
                                     onSelected: (String? seleccion)
@@ -295,7 +295,6 @@ class _CalculadoraState extends State<Calculadora>
                                           _restricciones[index].igualdad = seleccion!;
                                         });
                                       },),
-                                      
                                       TextField(
                                         controller: _restricciones[index].resultado.controller,
                                         focusNode: _restricciones[index].resultado.focusNode,
@@ -306,7 +305,7 @@ class _CalculadoraState extends State<Calculadora>
                                         readOnly: true,
                                         enableInteractiveSelection: false,
                                         onChanged: (value) => _restricciones[index].resultado.cambiarValor(value),
-                                        decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30)))]));
+                                        decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 40)))]));
                   })
                   ],) 
             )),

@@ -157,9 +157,7 @@ class PantallaSimplex extends StatelessWidget {
                   ...List.generate(simplex.estandarinicial.length, (e)=>
                     mostrarEstandar(e)
                   ),
-            /*const Text('Tabla Estandarizada:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            _buildTabla(simplex.estandar, simplex.variables),
-            const SizedBox(height: 24),*/
+
             _buildHistorial(),
             const SizedBox(height: 24),
             const Text('Solución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),

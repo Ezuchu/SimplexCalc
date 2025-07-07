@@ -13,7 +13,10 @@ class PantallaDosFases extends StatelessWidget
   PantallaDosFases({super.key,required this.dosFases})
   {
     crearFilaSuperior(listaFilasSuperiores[0], dosFases.variablesFase1);
-    crearFilaSuperior(listaFilasSuperiores[1], dosFases.variablesFase2);
+    if(dosFases.variablesFase2.isNotEmpty)
+    {
+      crearFilaSuperior(listaFilasSuperiores[1], dosFases.variablesFase2);
+    }
   }
 
   void crearFilaSuperior(List<String> filaSuperior,List<String>? variables)
@@ -138,8 +141,30 @@ class PantallaDosFases extends StatelessWidget
       estandar+="${listaFilasSuperiores[0][i]} ";
 
     }
-    estandar += " = ${fila.last}";
+    estandar += " = ${fila.last.toStringAsFixed(2)}";
     return Text(estandar, style: TextStyle(fontSize: 16));
+  }
+
+  List<Widget> generarFase2()
+  {
+    if(!dosFases.esFactible)
+    {
+      return [Text("No existe solución factible", style: TextStyle(fontSize: 18),)];
+    }else
+    {
+      List<Widget> widgets = [];
+      widgets.addAll(
+              [const SizedBox(height: 24),
+              const Text('Fase 2:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+              ...List.generate(dosFases.simplexFase2.estandarinicial.length, (e)=>
+                      mostrarEstandar(dosFases.simplexFase2, e)
+                    ),
+              _buildHistorial(dosFases.simplexFase2,1),
+              const SizedBox(height: 24),
+              const Text('Solución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              _buildSolucion(dosFases.simplexFase2)]);
+      return widgets;
+    }
   }
 
   @override
@@ -160,18 +185,12 @@ class PantallaDosFases extends StatelessWidget
                   ...List.generate(dosFases.simplexFase1.estandarinicial.length, (e)=>
                     mostrarEstandar(dosFases.simplexFase1, e)
                   ),
-
             const Text('Fase 1:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-            _buildHistorial(dosFases.simplexFase1,0),
-            const SizedBox(height: 24),
-            const Text('Fase 2:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-            ...List.generate(dosFases.simplexFase2.estandarinicial.length, (e)=>
-                    mostrarEstandar(dosFases.simplexFase2, e)
-                  ),
-            _buildHistorial(dosFases.simplexFase2,1),
-            const SizedBox(height: 24),
-            const Text('Solución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            _buildSolucion(dosFases.simplexFase2),
+            ...List.generate(dosFases.simplexFase1.estandarinicial.length, (e)=>
+                      mostrarEstandar(dosFases.simplexFase1, e)
+                    ),
+              _buildHistorial(dosFases.simplexFase1,0),
+            ...generarFase2()
           ],
         ),
       ),

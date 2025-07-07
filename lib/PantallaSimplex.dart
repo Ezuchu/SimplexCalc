@@ -135,7 +135,7 @@ class PantallaSimplex extends StatelessWidget {
       estandar+="${filaSuperior[i]} ";
 
     }
-    estandar += " = ${fila.last}";
+    estandar += " = ${fila.last.toStringAsFixed(2)}";
     return Text(estandar, style: TextStyle(fontSize: 16));
   }
 

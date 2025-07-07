@@ -1,3 +1,4 @@
+import 'package:simplex_calc/algoritmoDosFases.dart';
 import 'package:simplex_calc/estandarizador.dart';
 import 'package:simplex_calc/funcObjetivo.dart';
 import 'package:simplex_calc/restriccion.dart';
@@ -8,9 +9,11 @@ class AlgoritmoSimplex
 {
   late FuncObjetivo funcion;
   late List<Restriccion> restricciones;
+  late String modo;
   late List<List<double>> estandarinicial;
   late List<List<double>> estandar;
   late List<String> variables;
+
   
   late int numeroHolguras;
   late int numeroVariables;
@@ -24,10 +27,13 @@ class AlgoritmoSimplex
   late List<List<List<double>>> soluciones;
   int numeroSoluciones = 0;
 
+  bool buscarMultiples = true;
+
   AlgoritmoSimplex(this.funcion,this.restricciones)
   {
     this.numeroHolguras = this.restricciones.length;
     this.numeroVariables = funcion.numVariables;
+    this.modo = funcion.optimizacion;
     this.estandar = [];
     this.estandarinicial = [];
     this.indicesHolguras = [];
@@ -85,7 +91,10 @@ class AlgoritmoSimplex
 
   void resolver()
   {
-    estandarizar();
+    if(estandar.isEmpty)
+    {
+      estandarizar();
+    }
     while (!esOptimo()) {
       int columnaPivote = encontrarColumnaPivote();
       int filaPivote = encontrarFilaPivote(columnaPivote);
@@ -95,10 +104,9 @@ class AlgoritmoSimplex
         return;
       }
       generarTabla(columnaPivote, filaPivote);
-      
     }
     
-    while(tieneSolucionesMultiples())
+    while(tieneSolucionesMultiples() && buscarMultiples)
     {
       int columnaPivote = encontrarColumnaPivoteMultiple();
       int filaPivote = encontrarFilaPivote(columnaPivote);
@@ -112,31 +120,34 @@ class AlgoritmoSimplex
   void generarTabla(int columnaPivote, int filaPivote)
   {
     // Registrar variables antes de actualizar
-    String variableEntrante = variables[columnaPivote];
+    String variableEntrante = variables[columnaPivote-1];
     String variableSaliente = variables[variablesBasicas[filaPivote - 1]];
     double valorPivote = estandar[filaPivote][columnaPivote];
+    TablaSimplex tablaAnterior = historialTablas.last;    
       
     actualizarVariablesBasicas(filaPivote, columnaPivote);
     pivotear(filaPivote, columnaPivote);
+
+    tablaAnterior.variableEntrante = variableEntrante;
+    tablaAnterior.variableSaliente = variableSaliente;
+    tablaAnterior.valorPivote = valorPivote;
+    tablaAnterior.columnaPivote = columnaPivote;
+    tablaAnterior.filaPivote = filaPivote;
       
     // Guardar tabla en el historial con información del pivote
-    guardarTablaEnHistorial(
-      filaPivote: filaPivote,
-      columnaPivote: columnaPivote,
-      variableEntrante: variableEntrante,
-      variableSaliente: variableSaliente,
-      valorPivote: valorPivote,
-    );
+    guardarTablaEnHistorial();
   }
 
   bool esOptimo() {
-    
-    // Verificar si todos los coeficientes en la fila Z son no negativos (para maximización)
-    for (int j = 0; j < estandar[0].length - 1; j++) {
-      if (estandar[0][j] < 0) return false;
+    bool esOptimo = true;
+    switch(modo)
+    {
+      case "max": esOptimo = esOptimoMax();break;
+      case "min": esOptimo = esOptimoMin();break;
+      default:
     }
+    if(!esOptimo){return false;}
     historialOptimas.add(historialTablas.last);
-    print("tablas: ${historialOptimas.length}");
     numeroSoluciones++;
     List<List<double>> solucion = [];
     copiarEstandar(estandar, solucion);
@@ -144,18 +155,59 @@ class AlgoritmoSimplex
     return true;
   }
 
+  bool esOptimoMax()
+  {
+    for (int j = 1; j < estandar[0].length - 1; j++) {
+      if (estandar[0][j] < 0) return false;
+    }
+    return true;
+  }
+
+  bool esOptimoMin()
+  {
+    for (int j = 1; j < estandar[0].length - 1; j++) {
+      if (estandar[0][j] > 0) return false;
+    }
+    return true;
+  }
+
   int encontrarColumnaPivote() {
-    // Encontrar la columna con el coeficiente más negativo en la fila Z
+    // Encontrar la columna con el coeficiente más negativo o positivo en la fila Z
+    int columnaPivote = 0;
+    switch(modo)
+    {
+      case "max": columnaPivote = encontrarColumnaMax();break;
+      case "min": columnaPivote = encontrarColumnaMin();break;
+    }
+    return columnaPivote;
+    
+  }
+
+  int encontrarColumnaMax()
+  {
     double minValor = 0;
     int columnaPivote = 0;
     
-    for (int j = 0; j < estandar[0].length - 1; j++) {
+    for (int j = 1; j < estandar[0].length - 1; j++) {
       if (estandar[0][j] < minValor) {
         minValor = estandar[0][j];
         columnaPivote = j;
       }
     }
+    return columnaPivote;
+  }
+
+  int encontrarColumnaMin()
+  {
+    double maxValor = 0;
+    int columnaPivote = 0;
     
+    for (int j = 1; j < estandar[0].length - 1; j++) {
+      if (estandar[0][j] > maxValor) {
+        maxValor = estandar[0][j];
+        columnaPivote = j;
+      }
+    }
     return columnaPivote;
   }
 
@@ -235,7 +287,6 @@ class AlgoritmoSimplex
 
     if(numeroSoluciones <= conteo)
     {
-      print("hola");
       return true;
     }
     
@@ -295,6 +346,8 @@ class AlgoritmoSimplex
       print(historialTablas[i].toString());
     }
   }
+
+  
 
 }
 

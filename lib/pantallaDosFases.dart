@@ -1,28 +1,31 @@
+
 import 'package:flutter/material.dart';
+import 'package:simplex_calc/algoritmoDosFases.dart';
 import 'package:simplex_calc/algoritmoSimplex.dart';
 import 'package:simplex_calc/tablaSimplex.dart';
 
-class PantallaSimplex extends StatelessWidget {
-  final AlgoritmoSimplex simplex;
-  late List<String> filaSuperior;
+class PantallaDosFases extends StatelessWidget
+{
+  final AlgoritmoDosFases dosFases;
+  late List<List<String>> listaFilasSuperiores =[[],[]];
+  
 
-  PantallaSimplex({super.key, required this.simplex})
+  PantallaDosFases({super.key,required this.dosFases})
   {
-    this.filaSuperior = [];
-    crearFilaSuperior();
+    crearFilaSuperior(listaFilasSuperiores[0], dosFases.variablesFase1);
+    crearFilaSuperior(listaFilasSuperiores[1], dosFases.variablesFase2);
   }
 
-  void crearFilaSuperior()
+  void crearFilaSuperior(List<String> filaSuperior,List<String>? variables)
   {
+    filaSuperior.clear();
     filaSuperior.add("Z");
-    filaSuperior.addAll(simplex.variables);
+    filaSuperior.addAll(variables!);
     filaSuperior.add("Sol");
   }
 
   Color colorCelda(TablaSimplex tabla, int fila, int columna)
   {
-    
-
     if(fila == tabla.filaPivote && columna == tabla.columnaPivote)
     {
       return Colors.cyan;
@@ -34,7 +37,7 @@ class PantallaSimplex extends StatelessWidget {
     return Colors.white;
   }
 
-  Widget _buildTabla(TablaSimplex tabla, List<String> variables,List<String> variablesBasicas) {
+  Widget _buildTabla(TablaSimplex tabla, List<String> variables,List<String> variablesBasicas,int fase) {
     List<List<double>> datos = tabla.datos;
     int numCols = datos.isNotEmpty ? datos[0].length : variables.length + 1;
     
@@ -50,7 +53,7 @@ class PantallaSimplex extends StatelessWidget {
             ...List.generate(numCols, (i) => TableCell(
               child: Padding(
                 padding: EdgeInsets.all(4.0),
-                child: Text(filaSuperior[i],
+                child: Text(listaFilasSuperiores[fase][i],
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -76,7 +79,7 @@ class PantallaSimplex extends StatelessWidget {
     );
 }
 
-  Widget _buildHistorial() {
+  Widget _buildHistorial(AlgoritmoSimplex simplex,int fase) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -87,7 +90,7 @@ class PantallaSimplex extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Iteración ${i + 1}'),
-              _buildTabla(tabla, simplex.variables,tabla.variablesBasicas),
+              _buildTabla(tabla, simplex.variables,tabla.variablesBasicas,fase),
               const SizedBox(height: 12),
             ],
           );
@@ -96,8 +99,8 @@ class PantallaSimplex extends StatelessWidget {
     );
   }
 
-  Widget _buildSolucion() {
-    if(simplex.noAcotado)
+  Widget _buildSolucion(AlgoritmoSimplex simplex) {
+    if(simplex.noAcotado && simplex.modo == "max")
     {
       return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,7 +127,7 @@ class PantallaSimplex extends StatelessWidget {
     );
   }
 
-  Widget mostrarEstandar(int iFila)
+  Widget mostrarEstandar(AlgoritmoSimplex simplex, int iFila)
   {
     String estandar = "";
     List<double> fila = simplex.estandarinicial[iFila];
@@ -132,7 +135,7 @@ class PantallaSimplex extends StatelessWidget {
     for(int i = 0; i < simplex.estandarinicial[0].length-1;i++)
     {
       estandar+= fila[i] < 0? "${fila[i].toStringAsFixed(2)}" : "+${fila[i].toStringAsFixed(2)}"; 
-      estandar+="${filaSuperior[i]} ";
+      estandar+="${listaFilasSuperiores[0][i]} ";
 
     }
     estandar += " = ${fila.last}";
@@ -142,32 +145,36 @@ class PantallaSimplex extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Simplex - Desarrollo')),
+      appBar: AppBar(title: const Text('Dos Fases - Desarrollo')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Función Objetivo:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  Text(simplex.funcion.toString(), style: TextStyle(fontSize: 16)),
+                  Text(dosFases.funcionOriginal.toString(), style: TextStyle(fontSize: 16)),
             Text("Restricciones:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  ...simplex.restricciones.map((r) =>
+                  ...dosFases.restriccionesOriginales.map((r) =>
                     Text(r.toString(), style: TextStyle(fontSize: 16))).toList(),
             Text("Estandar:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  ...List.generate(simplex.estandarinicial.length, (e)=>
-                    mostrarEstandar(e)
+                  ...List.generate(dosFases.simplexFase1.estandarinicial.length, (e)=>
+                    mostrarEstandar(dosFases.simplexFase1, e)
                   ),
-            /*const Text('Tabla Estandarizada:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            _buildTabla(simplex.estandar, simplex.variables),
-            const SizedBox(height: 24),*/
-            _buildHistorial(),
+
+            const Text('Fase 1:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+            _buildHistorial(dosFases.simplexFase1,0),
             const SizedBox(height: 24),
-            const Text('Solución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-            _buildSolucion(),
+            const Text('Fase 2:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+            ...List.generate(dosFases.simplexFase2.estandarinicial.length, (e)=>
+                    mostrarEstandar(dosFases.simplexFase2, e)
+                  ),
+            _buildHistorial(dosFases.simplexFase2,1),
+            const SizedBox(height: 24),
+            const Text('Solución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            _buildSolucion(dosFases.simplexFase2),
           ],
         ),
       ),
     );
   }
 }
-

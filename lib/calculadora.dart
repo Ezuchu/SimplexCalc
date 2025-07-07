@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:simplex_calc/PantallaSimplex.dart';
+import 'package:simplex_calc/algoritmoDosFases.dart';
 import 'package:simplex_calc/algoritmoSimplex.dart';
 import 'package:simplex_calc/boton.dart';
 import 'package:simplex_calc/funcObjetivo.dart';
+import 'package:simplex_calc/pantallaDosFases.dart';
 import 'package:simplex_calc/pantallaGrafico.dart';
 import 'package:simplex_calc/inputRestriccion.dart';
 import 'package:simplex_calc/inputTermino.dart';
@@ -134,7 +136,12 @@ class _CalculadoraState extends State<Calculadora>
               Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => PantallaSimplex(simplex: simplex)
               ));
-            }
+            }break;
+      case 3: AlgoritmoDosFases dosFases = AlgoritmoDosFases(funcion, restricciones);
+              dosFases.resolver();
+              Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => PantallaDosFases(dosFases: dosFases)
+              ));break;
     }
     
 

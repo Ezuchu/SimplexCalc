@@ -100,26 +100,50 @@ class _CalculadoraState extends State<Calculadora>
     });
   }
 
+  void _mostrarError(String mensaje)
+  {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(mensaje),
+        backgroundColor: Colors.blueGrey,
+        actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('OK'),
+        ),
+        ],
+      ),
+    );
+  }
+
   void _generarResultado()
   {
     List<Termino> terminosFuncion =[];
     List<Restriccion> restricciones = [];
-    for(InputTermino termino in _funcion)
-    {
-      print(termino.valor);
-      terminosFuncion.add(Termino(double.parse(termino.signo+termino.valor)));
-    } 
-    for(InputRestriccion restriccion in _restricciones)
-    {
-      
-      List<Termino> terminos = [];
-      for(InputTermino termino in restriccion.terminos)
-      {
-        print(termino.valor);
-        terminos.add(Termino(double.parse(termino.signo+termino.valor)));
+
+    try {
+      for (InputTermino termino in _funcion) {
+        terminosFuncion.add(Termino(double.parse(termino.signo + termino.valor)));
       }
-      restricciones.add(Restriccion(terminos,restriccion.igualdad,Termino(double.parse(restriccion.resultado.valor))));
+
+      for (InputRestriccion restriccion in _restricciones) {
+        List<Termino> terminos = [];
+        for (InputTermino termino in restriccion.terminos) {
+          terminos.add(Termino(double.parse(termino.signo + termino.valor)));
+        }
+        restricciones.add(Restriccion(
+          terminos,
+          restriccion.igualdad,
+          Termino(double.parse(restriccion.resultado.valor))));
+      }
+
+    } catch (e) {
+      _mostrarError("Por favor, ingrese solo números válidos en todos los campos.");
+      return;
     }
+
     FuncObjetivo funcion = FuncObjetivo(_numVariables, _optimizacion, terminosFuncion);
 
     switch(_metodo)
@@ -127,6 +151,10 @@ class _CalculadoraState extends State<Calculadora>
       case 1: if(funcion.numVariables == 2)
             {
               Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PantallaGrafico(funcion: funcion, restricciones: restricciones)));
+            }else
+            {
+              _mostrarError("Por favor, ingrese solo 2 variables para trabajar con el metodo grafico");
+              return;
             }break;
       
       case 2: if(validoSimplex(restricciones))
@@ -135,6 +163,13 @@ class _CalculadoraState extends State<Calculadora>
               simplex.resolver();
               Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => PantallaSimplex(simplex: simplex)
+              ));
+            }else
+            {
+              AlgoritmoDosFases dosFases = AlgoritmoDosFases(funcion, restricciones);
+              dosFases.resolver();
+              Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => PantallaDosFases(dosFases: dosFases)
               ));
             }break;
       case 3: AlgoritmoDosFases dosFases = AlgoritmoDosFases(funcion, restricciones);
@@ -278,17 +313,15 @@ class _CalculadoraState extends State<Calculadora>
         SingleChildScrollView(scrollDirection: Axis.horizontal,child:Row(mainAxisAlignment: MainAxisAlignment.center,
           children: [ DropdownMenu(
               dropdownMenuEntries: 
-                [DropdownMenuEntry(value: 1, label: "grafico"),
-                DropdownMenuEntry(value: 2, label: "simplex"),
-                DropdownMenuEntry(value: 3, label: "Dos fases"),
-                ],
+                [DropdownMenuEntry(value: 1, label: "Grafico"),
+                DropdownMenuEntry(value: 2, label: "Simplex-DosFases")],
               initialSelection: 1,
               onSelected: (int? seleccion){setState(() {
                 _metodo = seleccion!;});
                 },),
             ElevatedButton(
               onPressed:_cambiarOptimizacion, 
-              style: ElevatedButton.styleFrom(padding: EdgeInsets.all(15.0),shape: LinearBorder()),
+              style: ElevatedButton.styleFrom(padding: EdgeInsets.all(15.0),shape: LinearBorder(), backgroundColor: Color.fromRGBO(109, 129, 150, 1.0)),
               child: Container(width: 60,child: Text(_optimizacion),)),
             DropdownMenu(
               dropdownMenuEntries: 

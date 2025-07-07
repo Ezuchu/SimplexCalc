@@ -165,6 +165,7 @@ class AlgoritmoSimplex
 
   bool esOptimoMin()
   {
+    if(estandar[0].last <= 0) return true;
     for (int j = 1; j < estandar[0].length - 1; j++) {
       if (estandar[0][j] > 0) return false;
     }

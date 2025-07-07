@@ -24,11 +24,12 @@ class Restriccion implements EcuacionLineal
 
   bool evaluarDosVariables((double,double) punto)
   {
-    double a = punto.$1;
-    double b = punto.$2;
 
-    double x = terminos[0].valor*a;
-    double y = terminos[1].valor*b;
+    String a = punto.$1.toStringAsFixed(3);
+    String b = punto.$2.toStringAsFixed(3);
+
+    double x = terminos[0].valor*double.parse(a);
+    double y = terminos[1].valor*double.parse(b);
     double s = resultado.valor;
 
     switch(igualdad)

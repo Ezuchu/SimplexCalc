@@ -7,12 +7,15 @@ import 'package:simplex_calc/funcObjetivo.dart';
 import 'package:simplex_calc/restriccion.dart';
 import 'package:simplex_calc/termino.dart';
 
+typedef PuntoRestriccion = (List<(double,double)> puntos, Restriccion r);
+
 class PantallaGrafico extends StatelessWidget
 {
   final FuncObjetivo funcion;
   final List<Restriccion> restricciones;
   final List<Restriccion> restriccionesVariables = [];
   final List<List<(double,double)>> puntosInterseccion = [];
+  final List<PuntoRestriccion> puntosRestriccion = [];
   final List<(double,double)> vertices = [];
   final List<(double,double)> puntosFactibles = [];
   final List<double> soluciones = [];
@@ -126,10 +129,12 @@ class PantallaGrafico extends StatelessWidget
       maxX = x1 > maxX? x1 : maxX;
       maxY = y2 > maxY? y2 : maxY;
       puntosInterseccion.add(puntos);
+      puntosRestriccion.add((puntos,r)); 
     }else
     {
-      restriccionesVariables.add(r);
-    }   
+      restriccionesVariables.insert(0,r);
+    }
+    
   }
 
   generarPuntosInterseccioNegativo(Restriccion r)
@@ -142,27 +147,22 @@ class PantallaGrafico extends StatelessWidget
     double x2 = 0;
     double y1 = 0;
     double y2 = 0;
+
+    
     
     
     if(x < 0)
     {
       y1 = resultado/y;
-      if(x.abs()< y)
-      {
-        x2 = maximo;
-        y2 = calcularPunto(resultado, x2*x,y);
-        
-      }else
-      {
-        y2 = maximo;
-        x2 = calcularPunto(resultado,y2*y1,x);
-      }
-      
+      x2 = maximo;
+      y2 = calcularPunto(resultado, x2*x,y);
+
     }else
     {
       x1 = resultado/x;
       y2 = maximo;
-      y2 = calcularPunto(resultado, x2*x1, y);
+      x2 = calcularPunto(resultado, y2*y, x);
+
     }
 
     puntos.add((x1,y1));
@@ -171,36 +171,45 @@ class PantallaGrafico extends StatelessWidget
     
     
     
-    puntosInterseccion.add(puntos);
+    puntosInterseccion.insert(0,puntos);
+    puntosRestriccion.add((puntos,r));
   }
 
   void generarVertices()
   {
-    for (var i = 0; i < restricciones.length-1; i++) {
-      Restriccion r1 = restricciones[i];
+    
+    
+    for (var i = 0; i < puntosRestriccion.length-1; i++) {
+      
+      Restriccion r1 = puntosRestriccion[i].$2;
+      List<(double,double)>puntos1 = puntosRestriccion[i].$1;
       double x1 = r1.terminos[0].valor;
       double y1 = r1.terminos[1].valor;
       double s1 = r1.resultado.valor;
-      for(var j = i+1; j <= restricciones.length-1;j++)
+      for(var j = i+1; j <= puntosRestriccion.length-1;j++)
       {
-        Restriccion r2 = restricciones[j];
+        
+        Restriccion r2 = puntosRestriccion[j].$2;
+        List<(double,double)>puntos2 = puntosRestriccion[j].$1;
         double x2 = r2.terminos[0].valor;
         double y2 = r2.terminos[1].valor;
         double s2 = r2.resultado.valor;
 
-        if(puntosInterseccion[i].length < 2 && puntosInterseccion[j].length < 2)
+        if(puntos1.length < 2 && puntos2.length < 2)
         {
-          generarVerticeDosConstantes(i, j);
+
+          generarVerticeDosConstantes(puntos1, puntos2);
+
         }else
         {
-          if(puntosInterseccion[i].length < 2 || puntosInterseccion[j].length < 2)
+          if(puntos1.length < 2 || puntos2.length < 2)
           {
-            if(puntosInterseccion[i].length < 2 )
+            if(puntos1.length < 2 )
             {
-              generarVerticesUnConstante(i, x2, y2, s2);
+              generarVerticesUnConstante(puntos1, x2, y2, s2);
             }else
             {
-              generarVerticesUnConstante(j, x1, y1, s1);
+              generarVerticesUnConstante(puntos2, x1, y1, s1);
             }
           }else
           {
@@ -222,9 +231,6 @@ class PantallaGrafico extends StatelessWidget
     double nx2 = x2;
     double ny2 = y2;
     double ns2 = s2;
-
-    print("$nx1, $ny1, $ns1");
-    print("$nx2, $ny2, $ns2");
     
     if(nx1.abs() != 1)
     {
@@ -255,9 +261,6 @@ class PantallaGrafico extends StatelessWidget
       }
     }
 
-    print("$nx1, $ny1, $ns1");
-    print("$nx2, $ny2, $ns2");
-
     double y = obtenerY(ny1+ny2,ns1+ns2);
     
     if(y >= 0)
@@ -273,25 +276,27 @@ class PantallaGrafico extends StatelessWidget
     }
   }
 
-  void generarVerticeDosConstantes(int i, int j)
+  void generarVerticeDosConstantes(List<(double,double)> puntos1, List<(double,double)> puntos2)
   {
-    double ap1 = puntosInterseccion[i][0].$1;
-    double ap2 = puntosInterseccion[i][0].$2;
-    double bp1 = puntosInterseccion[j][0].$1;
-    double bp2 = puntosInterseccion[j][0].$2;
+    double ap1 = puntos1.first.$1;
+    double ap2 = puntos1.first.$2;
+    double bp1 = puntos2.first.$1;
+    double bp2 = puntos2.first.$2;
     if(ap1 != bp1 || ap2 != bp2)
     {
       sumarVertice((ap1+bp1,ap2+bp2));
     }
   }
 
-  void generarVerticesUnConstante(int c, double x, double y, double s)
+  void generarVerticesUnConstante(List<(double,double)> punto, double x, double y, double s)
   {
-    double ap1 = puntosInterseccion[c][0].$1;
-    double ap2 = puntosInterseccion[c][0].$2;
+    double ap1 = punto[0].$1;
+    double ap2 = punto[0].$2;
     double x1;
     double r;
     double y1;
+
+    
     if(ap1 != 0)
     {
       x1 = x*ap1;
@@ -374,7 +379,9 @@ class PantallaGrafico extends StatelessWidget
       List<double> variables = [puntosFactibles[i].$1,puntosFactibles[i].$2];
       double solucion = funcion.calcularSolucion(variables);
       soluciones.add(solucion);
+      
     }
+    
     if(funcion.optimizacion == "max")
     {
       obtenerMaximo();
@@ -407,7 +414,7 @@ class PantallaGrafico extends StatelessWidget
 
   void obtenerMinimo()
   {
-    double min = 0;
+    double min = double.infinity;
     List<(double,double)> optimos=[];
     for(int i = 0; i < soluciones.length; i++)
     {
@@ -693,10 +700,10 @@ class _GraficoPainter extends CustomPainter {
 
     if(x==0)
     {
-      canvas.drawLine(Offset(0.0+c, size.height - y-c), Offset(size.height, size.height-y), paint);
+      canvas.drawLine(Offset(0.0+c, size.height - y-c), Offset(size.height+c, size.height-y-c), paint);
     }else
     {
-      canvas.drawLine(Offset(x+c, size.height-c), Offset(x, 0), paint);
+      canvas.drawLine(Offset(x+c, size.height-c), Offset(x+c, 0.0-c), paint);
     }
   }
 

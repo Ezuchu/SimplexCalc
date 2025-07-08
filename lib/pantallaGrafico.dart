@@ -29,7 +29,7 @@ class PantallaGrafico extends StatelessWidget
 
   double maxX=0;
   double maxY=0;
-  double maximo=10;
+  double maximo=100;
 
   double minVerx=0;
   double minVery=0;
@@ -86,7 +86,14 @@ class PantallaGrafico extends StatelessWidget
 
   void calcularPuntoMaximo()
   {
-    maximo = maxX > maxY? maxX : maxY; 
+    if(maxX == 0 && maxY == 0)
+    {
+      maximo = 10;
+    }else
+    {
+      maximo = maxX > maxY? maxX : maxY; 
+    }
+    
   }
 
   double calcularPunto(double s, double a, double b)
@@ -617,6 +624,8 @@ class _GraficoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    double ancho = size.width < size.height? size.width : size.height;
+    canvas.clipRect(Rect.fromLTWH(0, c.ceilToDouble(), ancho, size.height));
     final paint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.stroke
@@ -642,7 +651,7 @@ class _GraficoPainter extends CustomPainter {
         canvas.drawCircle(Offset(x1+c, size.height - y1-c),5, paint);
         canvas.drawCircle(Offset(x2+c, size.height - y2-c),5, paint);
         canvas.drawLine(Offset(x1+c, size.height - y1-c), Offset(x2+c, size.height - y2-c), paint);
-        canvas.clipRect(Offset.zero & size);
+        //canvas.clipRect(Offset.zero & size);
       }
     }
 

@@ -52,6 +52,7 @@ class AlgoritmoDosFases
     crearVariables();
   }
 
+  //Guarda el indice de las holguras en una lista
   int obtenerHolguras()
   {
     int cont = 0;
@@ -68,6 +69,7 @@ class AlgoritmoDosFases
     return cont;
   }
 
+  //Guarda el indice de las variables artificiales en una lista
   int obtenerArtificiales()
   {
     int cont = 0;
@@ -86,6 +88,7 @@ class AlgoritmoDosFases
     return cont;
   }
 
+  //Guarda el nombre de las variables de la fase 1 en una lista
   void crearVariables()
   {
     for(int i = 1; i <= numeroVariables;i++)
@@ -105,10 +108,13 @@ class AlgoritmoDosFases
   void estandarizar()
   {
     int totalVariables = numeroVariables +numeroHolguras +numeroArtificiales;
+
     estandarInicial.clear();
     variablesNoBasicasFase1 = List.generate(numeroVariables,(i)=>i);
+
     int holgura = numeroHolguras<1? 0 : indicesHolguras.first-1;
     int artificial = numeroArtificiales<1?0 : indicesArtificiales.first-1;
+
     List<List<double>> rRestricciones = [];
     
     for(Restriccion restriccion in restriccionesOriginales)
@@ -118,10 +124,12 @@ class AlgoritmoDosFases
         case "<=": estandarInicial.add(Estandarizador.estandarizar(restriccion, totalVariables, holgura));
             variablesBasicasFase1.add(holgura);
             holgura++;break;
+
         case "=": estandarInicial.add(Estandarizador.estandarizar(restriccion, totalVariables, holgura,artificial: artificial));
             variablesBasicasFase1.add(artificial);
             artificial++;
             rRestricciones.add(estandarInicial.last);break;
+
         case ">=": estandarInicial.add(Estandarizador.estandarizar(restriccion, totalVariables, holgura,artificial: artificial));
             variablesBasicasFase1.add(artificial);
             variablesNoBasicasFase1.add(holgura);
@@ -130,6 +138,7 @@ class AlgoritmoDosFases
         default:
       }
     }
+    //Obten la fila 1 de la suma de restricciones artificiales
     List<double> fila1 = sumarRestricciones(estandarInicial[0].length, rRestricciones);
     estandarInicial.insert(0, fila1);
   }
@@ -152,6 +161,8 @@ class AlgoritmoDosFases
   void resolver() {
     estandarizar();
     ejecutarFase1();
+
+    
     if(simplexFase1.estandar[0].last > 0){esFactible = false;return;}
     
     estandarizarFase2();
@@ -199,21 +210,20 @@ class AlgoritmoDosFases
   {
     simplexFase1 = crearSimplexAuxiliarFase1("min",false);
     simplexFase1.resolver();
-    simplexFase1.mostrarHistorial();
   }
 
   void ejecutarFase2()
   {
     simplexFase2 = crearSimplexAuxiliarFase2(funcionOriginal.optimizacion, true);
     corregirFila1();
+
     simplexFase2.estandar = estandarDosFases;
     simplexFase2.guardarTablaEnHistorial();
+
     simplexFase2.resolver();
-    simplexFase2.mostrarHistorial();
   }
 
-
-
+  //Genera el estandar para la tabla inicial de la fase 2
   void estandarizarFase2()
   {
     estandarDosFases.clear();
@@ -228,6 +238,7 @@ class AlgoritmoDosFases
     }
   }
 
+  //Corrige la primera fila si las variables basicas no tienen coeficiente 0 en Z
   void corregirFila1()
   {
     for(int i = 0; i < variablesBasicasFase2.length;i++)
@@ -238,7 +249,6 @@ class AlgoritmoDosFases
         restarFilas(estandarDosFases[0],estandarDosFases[i+1],estandarDosFases[0][indiceVariable]);
       }
     }
-    print(estandarDosFases);
   }
 
   void restarFilas(List<double>fila1,List<double>filaI,double mult)

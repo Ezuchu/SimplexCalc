@@ -11,6 +11,8 @@ import 'package:simplex_calc/inputTermino.dart';
 import 'package:simplex_calc/restriccion.dart';
 import 'package:simplex_calc/termino.dart';
 
+
+//Pantalla de la interfaz de inicio
 class Calculadora extends StatefulWidget
 {
   const Calculadora({super.key,required this.title});
@@ -21,11 +23,11 @@ class Calculadora extends StatefulWidget
   State<Calculadora> createState() => _CalculadoraState();
 }
 
+//Control de estado de la interfaz
 class _CalculadoraState extends State<Calculadora>
 {
+  //Se establecen parametros por defecto
   
-
-
   int _metodo = 1;
 
   String _optimizacion = "max";
@@ -41,6 +43,7 @@ class _CalculadoraState extends State<Calculadora>
   late TextEditingController controlador;
 
   late InputTermino terminoActual;
+
   
   @override   
   void initState() {
@@ -60,7 +63,7 @@ class _CalculadoraState extends State<Calculadora>
   ];
 
   
-
+  //Cambia el tipo de optimizacion de la funcion objetivo
   void _cambiarOptimizacion()
   {
     this.setState(() {
@@ -68,6 +71,7 @@ class _CalculadoraState extends State<Calculadora>
     });
   }
 
+  //Reduce o aumenta el numero de variables en las ecuaciones
   void _cambiarVariables()
   {
     setState(() {
@@ -86,6 +90,7 @@ class _CalculadoraState extends State<Calculadora>
     }
   }
 
+  //Reduce o aumenta el numero de restricciones
   void _cambiarRestricciones()
   {
     setState(() {
@@ -100,6 +105,7 @@ class _CalculadoraState extends State<Calculadora>
     });
   }
 
+  
   void _mostrarError(String mensaje)
   {
     showDialog(
@@ -118,12 +124,15 @@ class _CalculadoraState extends State<Calculadora>
     );
   }
 
+  
   void _generarResultado()
   {
+    
     List<Termino> terminosFuncion =[];
     List<Restriccion> restricciones = [];
 
     try {
+      //Convierte las cadenas de entrada a datos validos para calculos reales
       for (InputTermino termino in _funcion) {
         terminosFuncion.add(Termino(double.parse(termino.signo + termino.valor)));
       }
@@ -146,8 +155,10 @@ class _CalculadoraState extends State<Calculadora>
 
     FuncObjetivo funcion = FuncObjetivo(_numVariables, _optimizacion, terminosFuncion);
 
+    //Seleccion de metodo
     switch(_metodo)
     {
+      //Grafico
       case 1: if(funcion.numVariables == 2)
             {
               Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PantallaGrafico(funcion: funcion, restricciones: restricciones)));
@@ -157,6 +168,7 @@ class _CalculadoraState extends State<Calculadora>
               return;
             }break;
       
+      //Simplex -> Si solo existen restricciones menor que
       case 2: if(validoSimplex(restricciones))
             {
               AlgoritmoSimplex simplex = AlgoritmoSimplex(funcion, restricciones);
@@ -164,7 +176,8 @@ class _CalculadoraState extends State<Calculadora>
               Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => PantallaSimplex(simplex: simplex)
               ));
-            }else
+            }
+            else//Dos Fases -> Si no es válido para simplex
             {
               AlgoritmoDosFases dosFases = AlgoritmoDosFases(funcion, restricciones);
               dosFases.resolver();
@@ -172,11 +185,6 @@ class _CalculadoraState extends State<Calculadora>
               builder: (context) => PantallaDosFases(dosFases: dosFases)
               ));
             }break;
-      case 3: AlgoritmoDosFases dosFases = AlgoritmoDosFases(funcion, restricciones);
-              dosFases.resolver();
-              Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => PantallaDosFases(dosFases: dosFases)
-              ));break;
     }
     
 
@@ -194,6 +202,7 @@ class _CalculadoraState extends State<Calculadora>
     return true;
   }
 
+  //Controla las funciones de los botones
   void presionarBoton(String valor)
   {
     String texto = terminoActual.valor;
@@ -209,7 +218,7 @@ class _CalculadoraState extends State<Calculadora>
     
   }
 
-
+  //Constructor de pantalla
   @override  
   Widget build(BuildContext context)
   {
@@ -233,15 +242,19 @@ class _CalculadoraState extends State<Calculadora>
                     SingleChildScrollView(scrollDirection: Axis.horizontal,child:Row(children: [Text("Z =",style: TextStyle(fontSize: 24)),
                       ...List.generate(_funcion.length, (int index)
                       {
+                        //Entrada de funcion objetivo
                         return Row(children: [ElevatedButton(
                           style: ElevatedButton.styleFrom(shape: CircleBorder()),
+                          //Botones de Signos
                           onPressed: () {
                             setState(() {
                               _funcion[index].signo == "+" ? _funcion[index].signo = "-" : _funcion[index].signo = "+";
                             });
                           },
                           child: Container(width: 10,child: Text(_funcion[index].signo)),
-                        ), TextField(
+                        ), 
+                        //Campo de entrada de variable x
+                        TextField(
                             controller: _funcion[index].controller,
                             focusNode: _funcion[index].focusNode,
                             onTap: () => setState(() {
@@ -250,24 +263,31 @@ class _CalculadoraState extends State<Calculadora>
                             }),
                             readOnly: true,
                             enableInteractiveSelection: false,
-                            //onChanged: (value) => _funcion[index].valor=value,
                             decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
-                        Text("X$index")]);
+                        Text("X${index+1}")]);
+
                       })]
                       )),
+
+                      //Apartado de restricciones
                   ...List.generate(_numRestricciones, (int index)
                   {
                     return SingleChildScrollView(scrollDirection: Axis.horizontal,child: Row(children: [...List.generate(_numVariables, (int index2)
                     {
                       return Row(children: [ElevatedButton(
                           style: ElevatedButton.styleFrom(shape: CircleBorder()),
+                          //Botones de signos
                           onPressed: () {
                             setState(() {
                               _restricciones[index].terminos[index2].cambiarSigno();
                             });
                           },
+
                           child: Container(width: 10,child: Text(_restricciones[index].terminos[index2].signo)),
-                        ),TextField(
+                        ),
+
+                        //Campo de entrada
+                        TextField(
                           controller: _restricciones[index].terminos[index2].controller,
                           focusNode: _restricciones[index].terminos[index2].focusNode,
                           onTap: ()=> setState(() {
@@ -277,8 +297,11 @@ class _CalculadoraState extends State<Calculadora>
                           readOnly: true,
                           enableInteractiveSelection: false,
                           decoration: InputDecoration(constraints: BoxConstraints(maxWidth: 30))),
-                        Text("X$index2")]);
+                        Text("X${index2+1}")]);
+
                     }),SizedBox(width: 10,),
+
+                    //Seleccion de igualdad o desigualdad
                     DropdownMenu(dropdownMenuEntries: 
                                                 [DropdownMenuEntry(value: "=", label: "="),
                                                 DropdownMenuEntry(value: "<=", label: "<="),
@@ -295,6 +318,8 @@ class _CalculadoraState extends State<Calculadora>
                                           _restricciones[index].igualdad = seleccion!;
                                         });
                                       },),
+
+                                      //Campo de resultado
                                       TextField(
                                         controller: _restricciones[index].resultado.controller,
                                         focusNode: _restricciones[index].resultado.focusNode,
@@ -309,8 +334,11 @@ class _CalculadoraState extends State<Calculadora>
                   })
                   ],) 
             )),
+        //Apartado inferior
         SingleChildScrollView(scrollDirection: Axis.horizontal,child:Row(mainAxisAlignment: MainAxisAlignment.center,
-          children: [ DropdownMenu(
+          children:
+            //Selector de metodo de resolución
+            [ DropdownMenu(
               dropdownMenuEntries: 
                 [DropdownMenuEntry(value: 1, label: "Grafico"),
                 DropdownMenuEntry(value: 2, label: "Simplex-DosFases")],
@@ -318,10 +346,14 @@ class _CalculadoraState extends State<Calculadora>
               onSelected: (int? seleccion){setState(() {
                 _metodo = seleccion!;});
                 },),
+            
+            //Boton de cambio de optimización
             ElevatedButton(
               onPressed:_cambiarOptimizacion, 
               style: ElevatedButton.styleFrom(padding: EdgeInsets.all(15.0),shape: LinearBorder(), backgroundColor: Color.fromRGBO(109, 129, 150, 1.0)),
               child: Container(width: 60,child: Text(_optimizacion),)),
+
+            //Selector de variables
             DropdownMenu(
               dropdownMenuEntries: 
                 [DropdownMenuEntry(value: 2, label: "X=2"),
@@ -332,6 +364,8 @@ class _CalculadoraState extends State<Calculadora>
               onSelected: (int? seleccion){setState(() {
                 _numVariables = seleccion!;});
                 _cambiarVariables();},),
+
+              //Selector de restricciones
               DropdownMenu(
               dropdownMenuEntries: 
                 [DropdownMenuEntry(value: 1, label: "1 Restriccion"),
@@ -343,6 +377,8 @@ class _CalculadoraState extends State<Calculadora>
                 _numRestricciones = seleccion!;
                 _cambiarRestricciones();
               });},)],)),
+
+        //Apartado de botones
         Row(mainAxisAlignment: MainAxisAlignment.center,spacing: 40,children: 
         [
           Boton(color: Colors.redAccent,textColor: Colors.black,buttonText: _botones[0], buttomTap: ()=> presionarBoton(_botones[0])),

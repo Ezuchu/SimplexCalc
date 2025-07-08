@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+
+//Clase de boton estandar
 class Boton extends StatelessWidget
 {
   final Color? color;
   final Color? textColor;
   final String buttonText;
+
+  //Funcion al presionar boton
   final buttomTap;
 
   const Boton({this.color,this.textColor,required this.buttonText,this.buttomTap});

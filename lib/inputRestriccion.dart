@@ -1,5 +1,7 @@
 import 'package:simplex_calc/inputTermino.dart';
 
+
+//Clase para la entrada de datos a las restricciones en formato texto
 class InputRestriccion 
 {
   List<InputTermino> terminos=[];

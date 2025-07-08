@@ -1,6 +1,8 @@
 import 'package:simplex_calc/ecuacionLineal.dart';
 import 'package:simplex_calc/termino.dart';
 
+
+//Clase que representa a la funcion objetivo
 class FuncObjetivo implements EcuacionLineal
 {
   late int numVariables;
@@ -21,13 +23,13 @@ class FuncObjetivo implements EcuacionLineal
     return resultado.trim();
   }
 
+  //Calcula la solución de la funcion dadas dos variables en una lista(Solo método gráfico)
   double calcularSolucion(List<double> variables)
   {
     double solucion = 0;
     
     for(int i = 0; i < terminos.length;i++)
     {
-      print(i);
       solucion += variables[i]*terminos[i].valor;
     }
     return solucion;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:simplex_calc/algoritmoSimplex.dart';
 import 'package:simplex_calc/tablaSimplex.dart';
 
+//Pantalla del método simplex
 class PantallaSimplex extends StatelessWidget {
   final AlgoritmoSimplex simplex;
   late List<String> filaSuperior;
@@ -19,10 +20,9 @@ class PantallaSimplex extends StatelessWidget {
     filaSuperior.add("Sol");
   }
 
+  
   Color colorCelda(TablaSimplex tabla, int fila, int columna)
   {
-    
-
     if(fila == tabla.filaPivote && columna == tabla.columnaPivote)
     {
       return Colors.cyan;
@@ -35,6 +35,7 @@ class PantallaSimplex extends StatelessWidget {
   }
 
   Widget _buildTabla(TablaSimplex tabla, List<String> variables,List<String> variablesBasicas) {
+
     List<List<double>> datos = tabla.datos;
     int numCols = datos.isNotEmpty ? datos[0].length : variables.length + 1;
     
@@ -107,6 +108,7 @@ class PantallaSimplex extends StatelessWidget {
     List<Widget> resultados = [];
     List<List<List<double>>> soluciones = simplex.soluciones;
     List<TablaSimplex> tablas = simplex.historialOptimas;
+
     for(int i = 0; i < soluciones.length;i++)
     {
       resultados.add(Text('Valor óptimo de Z: ${simplex.estandar[0].last.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)));
@@ -139,6 +141,7 @@ class PantallaSimplex extends StatelessWidget {
     return Text(estandar, style: TextStyle(fontSize: 16));
   }
 
+  //Constructor de pantalla
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,9 +153,11 @@ class PantallaSimplex extends StatelessWidget {
           children: [
             Text("Función Objetivo:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   Text(simplex.funcion.toString(), style: TextStyle(fontSize: 16)),
+                  
             Text("Restricciones:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ...simplex.restricciones.map((r) =>
                     Text(r.toString(), style: TextStyle(fontSize: 16))).toList(),
+
             Text("Estandar:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ...List.generate(simplex.estandarinicial.length, (e)=>
                     mostrarEstandar(e)

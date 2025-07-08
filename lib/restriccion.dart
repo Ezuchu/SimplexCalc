@@ -1,6 +1,8 @@
 import 'package:simplex_calc/ecuacionLineal.dart';
 import 'package:simplex_calc/termino.dart';
 
+
+//Clase para representar restricciones
 class Restriccion implements EcuacionLineal
 {
   List<Termino> terminos = [];
@@ -22,6 +24,7 @@ class Restriccion implements EcuacionLineal
     return resultado.trim();
   }
 
+  //Evalua si se cumple la restriccion en un punto dado del plano cartesiano(Solo método gráfico)
   bool evaluarDosVariables((double,double) punto)
   {
 

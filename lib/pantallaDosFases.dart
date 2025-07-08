@@ -4,6 +4,7 @@ import 'package:simplex_calc/algoritmoDosFases.dart';
 import 'package:simplex_calc/algoritmoSimplex.dart';
 import 'package:simplex_calc/tablaSimplex.dart';
 
+//Pantalla del método Dos fases
 class PantallaDosFases extends StatelessWidget
 {
   final AlgoritmoDosFases dosFases;
@@ -12,6 +13,7 @@ class PantallaDosFases extends StatelessWidget
 
   PantallaDosFases({super.key,required this.dosFases})
   {
+    //Crea un encabezado para cada fase
     crearFilaSuperior(listaFilasSuperiores[0], dosFases.variablesFase1);
     if(dosFases.variablesFase2.isNotEmpty)
     {
@@ -147,7 +149,7 @@ class PantallaDosFases extends StatelessWidget
 
   List<Widget> generarFase2()
   {
-    if(!dosFases.esFactible)
+    if(!dosFases.esFactible)//Corta el ejercicio si no es factible
     {
       return [Text("No existe solución factible", style: TextStyle(fontSize: 18),)];
     }else
@@ -159,8 +161,10 @@ class PantallaDosFases extends StatelessWidget
               ...List.generate(dosFases.simplexFase2.estandarinicial.length, (e)=>
                       mostrarEstandar(dosFases.simplexFase2, e)
                     ),
+
               _buildHistorial(dosFases.simplexFase2,1),
               const SizedBox(height: 24),
+              
               const Text('Solución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               _buildSolucion(dosFases.simplexFase2)]);
       return widgets;
@@ -178,17 +182,21 @@ class PantallaDosFases extends StatelessWidget
           children: [
             Text("Función Objetivo:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   Text(dosFases.funcionOriginal.toString(), style: TextStyle(fontSize: 16)),
+
             Text("Restricciones:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ...dosFases.restriccionesOriginales.map((r) =>
                     Text(r.toString(), style: TextStyle(fontSize: 16))).toList(),
+
             Text("Estandar:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ...List.generate(dosFases.simplexFase1.estandarinicial.length, (e)=>
                     mostrarEstandar(dosFases.simplexFase1, e)
                   ),
+
             const Text('Fase 1:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
             ...List.generate(dosFases.simplexFase1.estandarinicial.length, (e)=>
                       mostrarEstandar(dosFases.simplexFase1, e)
                     ),
+
               _buildHistorial(dosFases.simplexFase1,0),
             ...generarFase2()
           ],

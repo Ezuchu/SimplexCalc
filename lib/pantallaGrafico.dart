@@ -7,8 +7,10 @@ import 'package:simplex_calc/funcObjetivo.dart';
 import 'package:simplex_calc/restriccion.dart';
 import 'package:simplex_calc/termino.dart';
 
+//Registro que vincula las restricciones con sus puntos de interseccion o corte
 typedef PuntoRestriccion = (List<(double,double)> puntos, Restriccion r);
 
+//Pantalla del metodo gráfico
 class PantallaGrafico extends StatelessWidget
 {
   final FuncObjetivo funcion;
@@ -21,6 +23,7 @@ class PantallaGrafico extends StatelessWidget
   final List<double> soluciones = [];
   double solucionOptima = 0;
   List<(double,double)> puntosOptimos = [];
+
   bool noAcotado = false;
   bool degenerada = false;
 
@@ -36,6 +39,8 @@ class PantallaGrafico extends StatelessWidget
   PantallaGrafico({super.key, required this.funcion, required this.restricciones})
   {
     int contAcotado = 0;
+
+    //Genera los puntos de corte de cada restriccion
     for(Restriccion r in restricciones)
     {
       generarPuntosInterseccion(r);
@@ -44,10 +49,13 @@ class PantallaGrafico extends StatelessWidget
         contAcotado++;
       }  
     }
+
     noAcotado = contAcotado == restricciones.length? true : false;
 
+    //Calcula cual es el punto con mayor valor en X o Y
     calcularPuntoMaximo();
 
+    //Genera los puntos de interseccion en las restricciones con al menos una variable negativa
     if(restriccionesVariables.isNotEmpty)
     {
       for(Restriccion r in restriccionesVariables)
@@ -58,8 +66,11 @@ class PantallaGrafico extends StatelessWidget
 
     vertices.add((0,0));
 
+    //Genera los vertices entre rectas
     generarVertices();
+    //Determina puntos y zona factible
     obtenerSolucionesFactibles();
+
     if(noAcotado)
     {
       ordenarSolucionesNoAcotada();
@@ -68,6 +79,8 @@ class PantallaGrafico extends StatelessWidget
       ordenarSoluciones();
     }
     calcularSoluciones();
+
+    //Elimina vertices duplicados
     vertices.toSet().toList();
   }
 
@@ -100,6 +113,7 @@ class PantallaGrafico extends StatelessWidget
     }
   }
 
+  //Genera los puntos de interseccion de una restriccion
   void generarPuntosInterseccion(Restriccion r)
   {
     List<(double, double)> puntos = [];
@@ -108,8 +122,6 @@ class PantallaGrafico extends StatelessWidget
     double resultado = r.resultado.valor;
     double x1 = 0;
     double y2 = 0;
-
-    
 
     if(x >= 0 && y >= 0)
     {
@@ -126,17 +138,22 @@ class PantallaGrafico extends StatelessWidget
         puntos.add((0,y2));
         sumarVertice((0,y2));
       }
+
       maxX = x1 > maxX? x1 : maxX;
       maxY = y2 > maxY? y2 : maxY;
+
+      //Agrega puntos a la lista
       puntosInterseccion.add(puntos);
       puntosRestriccion.add((puntos,r)); 
     }else
     {
+      //Si tiene una variable negativa, asignar a las restricciones de relacion de variables
       restriccionesVariables.insert(0,r);
     }
     
   }
 
+  //Genera los puntos de corte para las restricciones tipo -x1 + x2 >= 0  o  x2 >= x1 
   generarPuntosInterseccioNegativo(Restriccion r)
   {
     List<(double, double)> puntos = [];
@@ -150,7 +167,7 @@ class PantallaGrafico extends StatelessWidget
 
     
     
-    
+    //Calcula punto de interseccion
     if(x < 0)
     {
       y1 = resultado/y;
@@ -162,7 +179,6 @@ class PantallaGrafico extends StatelessWidget
       x1 = resultado/x;
       y2 = maximo;
       x2 = calcularPunto(resultado, y2*y, x);
-
     }
 
     puntos.add((x1,y1));
@@ -170,22 +186,22 @@ class PantallaGrafico extends StatelessWidget
     sumarVertice((x1,y1));
     
     
-    
+    //Agrega a la lista
     puntosInterseccion.insert(0,puntos);
     puntosRestriccion.add((puntos,r));
   }
 
+  //Genera los vertices de cruces de rectas
   void generarVertices()
   {
-    
-    
+
     for (var i = 0; i < puntosRestriccion.length-1; i++) {
-      
       Restriccion r1 = puntosRestriccion[i].$2;
       List<(double,double)>puntos1 = puntosRestriccion[i].$1;
       double x1 = r1.terminos[0].valor;
       double y1 = r1.terminos[1].valor;
       double s1 = r1.resultado.valor;
+
       for(var j = i+1; j <= puntosRestriccion.length-1;j++)
       {
         
@@ -195,13 +211,14 @@ class PantallaGrafico extends StatelessWidget
         double y2 = r2.terminos[1].valor;
         double s2 = r2.resultado.valor;
 
+        //Cuando las rectas son dos constantes, ejemplo: x = 2, y <= 7
         if(puntos1.length < 2 && puntos2.length < 2)
         {
-
           generarVerticeDosConstantes(puntos1, puntos2);
 
         }else
         {
+          //Cuando solo una recta es constante
           if(puntos1.length < 2 || puntos2.length < 2)
           {
             if(puntos1.length < 2 )
@@ -211,7 +228,7 @@ class PantallaGrafico extends StatelessWidget
             {
               generarVerticesUnConstante(puntos2, x1, y1, s1);
             }
-          }else
+          }else //Ambas rectas son lineales
           {
             generarVertice(x1, x2, y1, y2, s1, s2);
           }
@@ -221,13 +238,15 @@ class PantallaGrafico extends StatelessWidget
     }
   }
 
+  //Genera el vertice del cruce de funciones lineales
   void generarVertice(double x1, double x2, double y1, double y2, double s1, double s2)
   {
     
-    
+    //Restriccion 1
     double nx1 = x1;
     double ny1 = y1;
     double ns1 = s1;
+    //Restriccion 2
     double nx2 = x2;
     double ny2 = y2;
     double ns2 = s2;
@@ -261,14 +280,17 @@ class PantallaGrafico extends StatelessWidget
       }
     }
 
+    //Se restan las restricciones para obtener la y
     double y = obtenerY(ny1+ny2,ns1+ns2);
     
     if(y >= 0)
     {
+      //Aplica la y para la restriccion 2
       double r = s2 - (y*y2);
       
       double x = r/x2;
       
+      //Agregar vertice si es valido
       if(x>=0)
       {
         sumarVertice((x,y));
@@ -278,25 +300,33 @@ class PantallaGrafico extends StatelessWidget
 
   void generarVerticeDosConstantes(List<(double,double)> puntos1, List<(double,double)> puntos2)
   {
+    //Restriccion 1
     double ap1 = puntos1.first.$1;
     double ap2 = puntos1.first.$2;
+    //Restriccion 2
     double bp1 = puntos2.first.$1;
     double bp2 = puntos2.first.$2;
+
+    //Si las restricciones no son paralelas, sumar puntos y agregar vertice
     if(ap1 != bp1 || ap2 != bp2)
     {
       sumarVertice((ap1+bp1,ap2+bp2));
     }
   }
 
+  //Agregar vertice cuando una restriccion es constante
   void generarVerticesUnConstante(List<(double,double)> punto, double x, double y, double s)
   {
+    //Restriccion 1
     double ap1 = punto[0].$1;
     double ap2 = punto[0].$2;
+
+    //Restriccion 2
     double x1;
     double r;
     double y1;
 
-    
+    // Para constantes verticales
     if(ap1 != 0)
     {
       x1 = x*ap1;
@@ -305,9 +335,8 @@ class PantallaGrafico extends StatelessWidget
       if(y1 >= 0)
       {
         sumarVertice((ap1,y1));
-
       }
-    }else
+    }else // Para constantes horizontales
     {
       y1 = y*ap2;
       r = s - y1;
@@ -319,6 +348,7 @@ class PantallaGrafico extends StatelessWidget
     }
   }
 
+  
   obtenerSolucionesFactibles()
   {
     for((double,double) punto in vertices)
@@ -326,6 +356,7 @@ class PantallaGrafico extends StatelessWidget
       bool valido = true;
       if(!puntosFactibles.contains(punto))
       {
+        //Evalua el punto en cada restriccion del problema
         for(Restriccion r in restricciones)
         {
           valido = r.evaluarDosVariables(punto);
@@ -347,6 +378,7 @@ class PantallaGrafico extends StatelessWidget
     puntosFactibles.sort((a, b) => a.$1.compareTo(b.$1));
   }
 
+  //Ordena las soluciones para el posterior trazado de lineas en el gráfico
   void ordenarSoluciones()
   {
     
@@ -379,7 +411,6 @@ class PantallaGrafico extends StatelessWidget
       List<double> variables = [puntosFactibles[i].$1,puntosFactibles[i].$2];
       double solucion = funcion.calcularSolucion(variables);
       soluciones.add(solucion);
-      
     }
     
     if(funcion.optimizacion == "max")
@@ -395,6 +426,7 @@ class PantallaGrafico extends StatelessWidget
   {
     double max = 0;
     List<(double,double)> optimos=[];
+
     for(int i = 0; i < soluciones.length; i++)
     {
       if(soluciones[i]==max)
@@ -416,6 +448,7 @@ class PantallaGrafico extends StatelessWidget
   {
     double min = double.infinity;
     List<(double,double)> optimos=[];
+
     for(int i = 0; i < soluciones.length; i++)
     {
       if(soluciones[i]==min)
@@ -494,6 +527,7 @@ class PantallaGrafico extends StatelessWidget
     return lista;
   }
 
+  //constructor de pantalla
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -515,20 +549,24 @@ class PantallaGrafico extends StatelessWidget
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
                   Text("Función Objetivo:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   Text(funcion.toString(), style: TextStyle(fontSize: 16)),
+
                   SizedBox(height: 20),
                   Text("Restricciones:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ...listaRestricciones(),
+
                   Text("Puntos de Corte:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ...listaPuntos(),
+
                   Text("Gráfico:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  // Aquí se puede integrar un widget de gráfico, como un CustomPaint o un paquete de gráficos
                   Container(color: Colors.white,padding: EdgeInsets.all(10),margin: EdgeInsets.symmetric(horizontal:10,vertical: 100),
                     child:CustomPaint(
                       size: Size(double.infinity, 300),
                       painter: _GraficoPainter(puntosInterseccion, funcion.terminos, restricciones,vertices,puntosFactibles,maximo,noAcotado)
                     )),
+                  
                   Text("Vertices:",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ...List.generate(puntosFactibles.length, (int index)
                   {
@@ -540,6 +578,7 @@ class PantallaGrafico extends StatelessWidget
                     }
                     return Text(texto, style: TextStyle(fontSize: 16));
                   }),
+
                   Text("Conclusión:",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   Text(mostrarTipoSolucion(),style: TextStyle(fontSize: 16)),
                   ...List.generate(puntosOptimos.length, (int index)
@@ -560,6 +599,7 @@ class PantallaGrafico extends StatelessWidget
   }
 }
 
+//Pintor del gráfico
 class _GraficoPainter extends CustomPainter {
   final List<List<(double, double)>> puntosInterseccion;
   final List<Termino> terminosFuncion;
@@ -599,26 +639,19 @@ class _GraficoPainter extends CustomPainter {
         double x2 = puntos[1].$1 / maximo * size.height;
         double y2 = puntos[1].$2 / maximo * size.height;
 
-        /*if(puntos[1].$1 > maximo)
-        {
-          x2 = size.height;
-        }
-        if(puntos[1].$2 > maximo)
-        {
-          y2 = size.height;
-        }*/
-
         canvas.drawCircle(Offset(x1+c, size.height - y1-c),5, paint);
         canvas.drawCircle(Offset(x2+c, size.height - y2-c),5, paint);
         canvas.drawLine(Offset(x1+c, size.height - y1-c), Offset(x2+c, size.height - y2-c), paint);
         canvas.clipRect(Offset.zero & size);
       }
     }
+
     for((double,double) vertice in vertices)
     {
       dibujarVertice(vertice, canvas, size);
     }
 
+    //Dibujado de la región factible
     for(int i = 0; i < puntosFactibles.length;i++)
     {
       if(i != puntosFactibles.length-1)
@@ -634,6 +667,7 @@ class _GraficoPainter extends CustomPainter {
     
   }
 
+  //Dibujado de puntos en la región factible
   void anotarCoordenada(int i, double x, double y,Canvas canvas,Size size)
   {
     double px = x/maximo*size.height;

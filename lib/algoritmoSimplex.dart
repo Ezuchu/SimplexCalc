@@ -5,6 +5,7 @@ import 'package:simplex_calc/restriccion.dart';
 import 'package:simplex_calc/tablaSimplex.dart';
 import 'package:simplex_calc/termino.dart';
 
+
 class AlgoritmoSimplex 
 {
   late FuncObjetivo funcion;
@@ -47,6 +48,7 @@ class AlgoritmoSimplex
     this.crearVariables();
   }
 
+  //Guarda el nombre de las variables en una lista
   void crearVariables()
   {
     for(int i = 1; i <= numeroVariables;i++)
@@ -58,6 +60,7 @@ class AlgoritmoSimplex
       variables.add("S$i");
     }
   }
+
 
   void estandarizar()
   {
@@ -73,6 +76,7 @@ class AlgoritmoSimplex
       
       estandar.add(Estandarizador.estandarizar(restricciones[s],numeroVariables+numeroHolguras,s+numeroVariables));
     }
+    //Guarda el primer estandarizado
     copiarEstandar(estandar, estandarinicial);
     guardarTablaEnHistorial();
   }
@@ -95,26 +99,28 @@ class AlgoritmoSimplex
     {
       estandarizar();
     }
+
     while (!esOptimo()) {
       int columnaPivote = encontrarColumnaPivote();
       int filaPivote = encontrarFilaPivote(columnaPivote);
+
       if (filaPivote == -1) {
         noAcotado = true;
         print("\nEl problema no tiene solución acotada.");
         return;
       }
+
       generarTabla(columnaPivote, filaPivote);
     }
-    
+
     while(tieneSolucionesMultiples() && buscarMultiples)
     {
       int columnaPivote = encontrarColumnaPivoteMultiple();
       int filaPivote = encontrarFilaPivote(columnaPivote);
+
       generarTabla(columnaPivote, filaPivote);
       esOptimo();
     }
-    /*mostrarSolucion();
-    mostrarHistorial();*/
   }
 
   void generarTabla(int columnaPivote, int filaPivote)
@@ -125,6 +131,7 @@ class AlgoritmoSimplex
     double valorPivote = estandar[filaPivote][columnaPivote];
     TablaSimplex tablaAnterior = historialTablas.last;    
       
+
     actualizarVariablesBasicas(filaPivote, columnaPivote);
     pivotear(filaPivote, columnaPivote);
 
@@ -138,20 +145,27 @@ class AlgoritmoSimplex
     guardarTablaEnHistorial();
   }
 
+
   bool esOptimo() {
     bool esOptimo = true;
+    //Verifica si es optimo segun la optimizacion
     switch(modo)
     {
       case "max": esOptimo = esOptimoMax();break;
       case "min": esOptimo = esOptimoMin();break;
       default:
     }
+
     if(!esOptimo){return false;}
+
     historialOptimas.add(historialTablas.last);
+
     numeroSoluciones++;
     List<List<double>> solucion = [];
+
     copiarEstandar(estandar, solucion);
     soluciones.add(solucion);
+
     return true;
   }
 
@@ -165,7 +179,9 @@ class AlgoritmoSimplex
 
   bool esOptimoMin()
   {
+    //Para la iteración si es igual o menor a 0
     if(estandar[0].last <= 0) return true;
+
     for (int j = 1; j < estandar[0].length - 1; j++) {
       if (estandar[0][j] > 0) return false;
     }
@@ -279,6 +295,7 @@ class AlgoritmoSimplex
   bool tieneSolucionesMultiples()
   {
     int conteo = 0;
+    //Busca si alguna variable no basica tiene coeficiente 0 en Z
     for(int j = 0; j < estandar[0].length;j++)
     {
       if (variablesNoBasicas.contains(j-1) && estandar[0][j] == 0) {
@@ -286,6 +303,7 @@ class AlgoritmoSimplex
       }
     }
 
+    
     if(numeroSoluciones <= conteo)
     {
       return true;
@@ -353,13 +371,11 @@ class AlgoritmoSimplex
 }
 
 void main() {
-  // Crear función objetivo: Maximizar Z = 3x1 + 2x2
+
   var terminosObj = [Termino(3), Termino(2)];
   var funcionObjetivo = FuncObjetivo(2, "Maximizar", terminosObj);
   
-  // Crear restricciones:
-  // x1 + x2 <= 4
-  // 2x1 + x2 <= 5
+
   var terminosR1 = [Termino(1), Termino(1)];
   var restriccion1 = Restriccion(terminosR1, "<=", Termino(4));
   

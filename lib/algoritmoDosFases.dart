@@ -163,7 +163,11 @@ class AlgoritmoDosFases
     ejecutarFase1();
 
     
-    if(simplexFase1.estandar[0].last > 0){esFactible = false;return;}
+    if(simplexFase1.soluciones.isEmpty || existenArtificialesBasicas())
+    {
+      esFactible = false;
+      return;
+    }
     
     estandarizarFase2();
     actualizarNoBasicas();
@@ -177,6 +181,36 @@ class AlgoritmoDosFases
     
   }
 
+  bool existenArtificialesBasicas()
+  {
+    bool valido = false;
+    bool salida = false;
+    
+    do
+    {
+      valido = false;
+      for(int variable in variablesBasicasFase1)
+      {
+        if(indicesArtificiales.contains(variable+1))
+        {
+          valido = true;
+        }
+      }
+      if(valido)
+      {
+        if(simplexFase1.tieneSolucionesMultiples())
+        {
+          simplexFase1.resolverMultiple();
+        }else
+        {
+          return true;
+        }
+      }
+    }while(valido != false);
+
+    return valido;
+  }
+  
   void actualizarNoBasicas()
   {
     variablesNoBasicasFase2 = variablesNoBasicasFase1

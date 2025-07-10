@@ -115,12 +115,18 @@ class AlgoritmoSimplex
 
     while(tieneSolucionesMultiples() && buscarMultiples)
     {
-      int columnaPivote = encontrarColumnaPivoteMultiple();
-      int filaPivote = encontrarFilaPivote(columnaPivote);
-
-      generarTabla(columnaPivote, filaPivote);
-      esOptimo();
+      resolverMultiple();
     }
+    mostrarHistorial();
+  }
+
+  void resolverMultiple()
+  {
+    int columnaPivote = encontrarColumnaPivoteMultiple();
+    int filaPivote = encontrarFilaPivote(columnaPivote);
+
+    generarTabla(columnaPivote, filaPivote);
+    esOptimo();
   }
 
   void generarTabla(int columnaPivote, int filaPivote)
@@ -180,7 +186,7 @@ class AlgoritmoSimplex
   bool esOptimoMin()
   {
     //Para la iteración si es igual o menor a 0
-    if(estandar[0].last <= 0) return true;
+    //if(estandar[0].last <= 0) return true;
 
     for (int j = 1; j < estandar[0].length - 1; j++) {
       if (estandar[0][j] > 0) return false;

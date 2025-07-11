@@ -185,7 +185,7 @@ class AlgoritmoDosFases
   {
     bool valido = false;
     bool salida = false;
-    
+    int conteo = 0;
     do
     {
       valido = false;
@@ -198,9 +198,10 @@ class AlgoritmoDosFases
       }
       if(valido)
       {
-        if(simplexFase1.tieneSolucionesMultiples())
+        if(simplexFase1.tieneSolucionesMultiples() && conteo < simplexFase1.numeroSoluciones)
         {
           simplexFase1.resolverMultiple();
+          conteo++;
         }else
         {
           return true;

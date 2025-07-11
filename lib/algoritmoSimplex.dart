@@ -124,6 +124,11 @@ class AlgoritmoSimplex
   {
     int columnaPivote = encontrarColumnaPivoteMultiple();
     int filaPivote = encontrarFilaPivote(columnaPivote);
+    if (filaPivote == -1) {
+        noAcotado = true;
+        print("\nEl problema no tiene solución acotada.");
+        return;
+    }
 
     generarTabla(columnaPivote, filaPivote);
     esOptimo();
@@ -309,6 +314,10 @@ class AlgoritmoSimplex
       }
     }
 
+    if(numeroSoluciones == 0)
+    {
+      return false;
+    }
     
     if(numeroSoluciones <= conteo)
     {

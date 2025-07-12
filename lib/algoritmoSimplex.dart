@@ -1,4 +1,3 @@
-import 'package:simplex_calc/algoritmoDosFases.dart';
 import 'package:simplex_calc/estandarizador.dart';
 import 'package:simplex_calc/funcObjetivo.dart';
 import 'package:simplex_calc/restriccion.dart';
@@ -8,6 +7,8 @@ import 'package:simplex_calc/termino.dart';
 
 class AlgoritmoSimplex 
 {
+  static const double TOLERANCIA = 1e-10;
+
   late FuncObjetivo funcion;
   late List<Restriccion> restricciones;
   late String modo;
@@ -107,16 +108,18 @@ class AlgoritmoSimplex
       if (filaPivote == -1) {
         noAcotado = true;
         print("\nEl problema no tiene solución acotada.");
+        mostrarHistorial();
+        print(estandar[0]);
         return;
       }
 
       generarTabla(columnaPivote, filaPivote);
     }
-
     while(tieneSolucionesMultiples() && buscarMultiples)
     {
       resolverMultiple();
     }
+
     mostrarHistorial();
   }
 
@@ -183,18 +186,15 @@ class AlgoritmoSimplex
   bool esOptimoMax()
   {
     for (int j = 1; j < estandar[0].length - 1; j++) {
-      if (estandar[0][j] < 0) return false;
+      if (_esNegativo(estandar[0][j])&& !_esCero(estandar[0][j])) return false;
     }
     return true;
   }
 
   bool esOptimoMin()
   {
-    //Para la iteración si es igual o menor a 0
-    //if(estandar[0].last <= 0) return true;
-
     for (int j = 1; j < estandar[0].length - 1; j++) {
-      if (estandar[0][j] > 0) return false;
+      if (_esPositivo(estandar[0][j]) && !_esCero(estandar[0][j])) return false;
     }
     return true;
   }
@@ -217,7 +217,7 @@ class AlgoritmoSimplex
     int columnaPivote = 0;
     
     for (int j = 1; j < estandar[0].length - 1; j++) {
-      if (estandar[0][j] < minValor) {
+      if (estandar[0][j] < minValor && _esNegativo(estandar[0][j])) {
         minValor = estandar[0][j];
         columnaPivote = j;
       }
@@ -231,12 +231,30 @@ class AlgoritmoSimplex
     int columnaPivote = 0;
     
     for (int j = 1; j < estandar[0].length - 1; j++) {
-      if (estandar[0][j] > maxValor) {
+      if (estandar[0][j] > maxValor && _esPositivo(estandar[0][j])) {
         maxValor = estandar[0][j];
         columnaPivote = j;
       }
     }
     return columnaPivote;
+  }
+
+  int encontrarFilaPivote(int columnaPivote) {
+    
+    double minRazon = double.infinity;
+    int filaPivote = -1;
+    
+    for (int i = 1; i < estandar.length; i++) {
+      if (_esPositivo(estandar[i][columnaPivote])) {
+        double razon = estandar[i].last / estandar[i][columnaPivote];
+        if (razon < minRazon && razon > -TOLERANCIA) {
+          minRazon = razon;
+          filaPivote = i;
+        }
+      }
+    }
+    
+    return filaPivote;
   }
 
   int encontrarColumnaPivoteMultiple() {
@@ -254,23 +272,7 @@ class AlgoritmoSimplex
     return columnaPivote;
   }
 
-  int encontrarFilaPivote(int columnaPivote) {
-    // Encontrar la fila con la menor razón positiva (columna solución / columna pivote)
-    double minRazon = double.infinity;
-    int filaPivote = -1;
-    
-    for (int i = 1; i < estandar.length; i++) {
-      if (estandar[i][columnaPivote] > 0) {
-        double razon = estandar[i].last / estandar[i][columnaPivote];
-        if (razon < minRazon) {
-          minRazon = razon;
-          filaPivote = i;
-        }
-      }
-    }
-    
-    return filaPivote;
-  }
+
 
   void pivotear(int filaPivote, int columnaPivote) {
     // Normalizar la fila pivote
@@ -309,7 +311,7 @@ class AlgoritmoSimplex
     //Busca si alguna variable no basica tiene coeficiente 0 en Z
     for(int j = 0; j < estandar[0].length;j++)
     {
-      if (variablesNoBasicas.contains(j-1) && estandar[0][j] == 0) {
+      if (variablesNoBasicas.contains(j-1) && _esCero(estandar[0][j])) {
         conteo++;
       }
     }
@@ -380,6 +382,10 @@ class AlgoritmoSimplex
       print(historialTablas[i].toString());
     }
   }
+
+    bool _esCero(double valor) => valor.abs() < TOLERANCIA;
+    bool _esPositivo(double valor) => valor > -TOLERANCIA;
+    bool _esNegativo(double valor) => valor < TOLERANCIA;
 
   
 

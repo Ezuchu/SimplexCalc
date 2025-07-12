@@ -1,4 +1,5 @@
 
+
 import 'package:simplex_calc/algoritmoSimplex.dart';
 import 'package:simplex_calc/estandarizador.dart';
 import 'package:simplex_calc/funcObjetivo.dart';
@@ -184,7 +185,6 @@ class AlgoritmoDosFases
   bool existenArtificialesBasicas()
   {
     bool valido = false;
-    bool salida = false;
     int conteo = 0;
     do
     {
@@ -328,18 +328,16 @@ class AlgoritmoDosFases
 void main()
 {
   // Crear función objetivo: Maximizar Z = 3x1 + 2x2
-  var terminosObj = [Termino(5), Termino(6)];
-  var funcionObjetivo = FuncObjetivo(2, "max", terminosObj);
-  
-  // Crear restricciones:
-  // x1 + x2 <= 4
-  // 2x1 + x2 <= 5
-  var terminosR1 = [Termino(1), Termino(2)];
-  var restriccion1 = Restriccion(terminosR1, "<=", Termino(10));
+  var terminosObj = [Termino(10), Termino(30)];
+  var funcionObjetivo = FuncObjetivo(2, "min", terminosObj);
   
 
-  var terminosR2 = [Termino(3), Termino(4)];
-  var restriccion2 = Restriccion(terminosR2, ">=", Termino(20));
+  var terminosR1 = [Termino(1), Termino(5)];
+  var restriccion1 = Restriccion(terminosR1, ">=", Termino(15));
+  
+
+  var terminosR2 = [Termino(5), Termino(1)];
+  var restriccion2 = Restriccion(terminosR2, ">=", Termino(15));
   
   var simplex = AlgoritmoDosFases(funcionObjetivo, [restriccion1, restriccion2]);
   simplex.resolver();

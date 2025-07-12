@@ -232,6 +232,7 @@ class AlgoritmoSimplex
     
     for (int j = 1; j < estandar[0].length - 1; j++) {
       if (estandar[0][j] > maxValor && _esPositivo(estandar[0][j])) {
+        print((maxValor,estandar[0][j]));
         maxValor = estandar[0][j];
         columnaPivote = j;
       }
@@ -263,7 +264,7 @@ class AlgoritmoSimplex
     int columnaPivote = 0;
     
     for (int j = 0; j < estandar[0].length - 1; j++) {
-      if (estandar[0][j] <= minValor && variablesNoBasicas.contains(j-1)) {
+      if ((_esCero(estandar[0][j])) && variablesNoBasicas.contains(j-1)) {
         minValor = estandar[0][j];
         columnaPivote = j;
       }

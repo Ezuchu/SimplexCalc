@@ -328,18 +328,21 @@ class AlgoritmoDosFases
 void main()
 {
   // Crear función objetivo: Maximizar Z = 3x1 + 2x2
-  var terminosObj = [Termino(10), Termino(30)];
+  var terminosObj = [Termino(2), Termino(1),Termino(3)];
   var funcionObjetivo = FuncObjetivo(2, "min", terminosObj);
   
 
-  var terminosR1 = [Termino(1), Termino(5)];
-  var restriccion1 = Restriccion(terminosR1, ">=", Termino(15));
+  var terminosR1 = [Termino(5), Termino(2),Termino(7)];
+  var restriccion1 = Restriccion(terminosR1, "=", Termino(420));
   
 
-  var terminosR2 = [Termino(5), Termino(1)];
-  var restriccion2 = Restriccion(terminosR2, ">=", Termino(15));
+  var terminosR2 = [Termino(3), Termino(2),Termino(5)];
+  var restriccion2 = Restriccion(terminosR2, ">=", Termino(280));
+
+  var terminosR3 = [Termino(1), Termino(0),Termino(1)];
+  var restriccion3 = Restriccion(terminosR3, "<=", Termino(100));
   
-  var simplex = AlgoritmoDosFases(funcionObjetivo, [restriccion1, restriccion2]);
+  var simplex = AlgoritmoDosFases(funcionObjetivo, [restriccion1, restriccion2,restriccion3]);
   simplex.resolver();
   
 }
